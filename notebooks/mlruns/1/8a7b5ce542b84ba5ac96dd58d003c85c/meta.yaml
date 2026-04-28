@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/hamad/Desktop/Bird%20ML/notebooks/mlruns/1/8a7b5ce542b84ba5ac96dd58d003c85c/artifacts
+end_time: 1777363663751
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 8a7b5ce542b84ba5ac96dd58d003c85c
+run_uuid: 8a7b5ce542b84ba5ac96dd58d003c85c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777363323788
+status: 4
+tags: []
+user_id: hamad

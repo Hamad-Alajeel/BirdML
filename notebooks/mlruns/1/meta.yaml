@@ -1,0 +1,4 @@
+artifact_location: file:///C:/Users/hamad/Desktop/Bird%20ML/notebooks/mlruns/1
+experiment_id: '1'
+lifecycle_stage: active
+name: baseline
