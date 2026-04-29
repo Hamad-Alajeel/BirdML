@@ -11,3 +11,9 @@ wheels/
 
 # Dataset
 data/
+
+# Secrets
+secrets/
+
+# claude
+CLAUDE.md
