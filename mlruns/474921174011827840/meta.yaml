@@ -1,0 +1,6 @@
+artifact_location: file:///mnt/custom-file-systems/s3/shared/mlruns/474921174011827840
+creation_time: 1777436382119
+experiment_id: '474921174011827840'
+last_update_time: 1777436382119
+lifecycle_stage: active
+name: baseline
