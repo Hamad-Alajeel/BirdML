@@ -1,0 +1,65 @@
+name: Trigger Training Pipeline
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      retune:
+        description: 'Run hyperparameter tuning'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+      skip_training:
+        description: 'Skip training and use existing model in S3'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+      tune_trials:
+        description: 'Number of Optuna trials (only used if retune=true)'
+        required: false
+        default: '30'
+      tune_params:
+        description: 'Comma-separated hyperparameters to tune'
+        required: false
+        default: 'lr_head,lr_backbone,n_warmup_epochs'
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPO: 798092529023.dkr.ecr.us-east-2.amazonaws.com/bird-ml-training
+
+jobs:
+  build-and-trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push training image
+        run: |
+          docker build -f infrastructure/docker/Dockerfile.training -t $ECR_REPO:latest .
+          docker push $ECR_REPO:latest
+
+      - name: Trigger SageMaker pipeline
+        run: |
+          aws sagemaker start-pipeline-execution \
+            --pipeline-name bird-ml-training \
+            --pipeline-parameters \
+              Name=RetuneHyperparameters,Value=${{ github.event.inputs.retune || 'false' }} \
+              Name=SkipTraining,Value=${{ github.event.inputs.skip_training || 'false' }} \
+              Name=TuneTrials,Value=${{ github.event.inputs.tune_trials || '30' }} \
+              Name=TuneParams,Value="${{ github.event.inputs.tune_params || 'lr_head,lr_backbone,n_warmup_epochs' }}" \
+            --region ${{ env.AWS_REGION }}

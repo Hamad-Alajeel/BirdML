@@ -1,0 +1,59 @@
+name: Deploy API and Frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_filename:
+        description: 'Model filename in S3 to serve'
+        required: false
+        default: 'EN_final.pth'
+
+env:
+  AWS_REGION: us-east-2
+  ECR_API: 798092529023.dkr.ecr.us-east-2.amazonaws.com/bird-ml-api
+  ECR_FRONTEND: 798092529023.dkr.ecr.us-east-2.amazonaws.com/bird-ml-frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        run: |
+          docker build -f api/Dockerfile -t $ECR_API:latest .
+          docker push $ECR_API:latest
+
+      - name: Build and push frontend image
+        run: |
+          docker build -f frontend/Dockerfile -t $ECR_FRONTEND:latest .
+          docker push $ECR_FRONTEND:latest
+
+      # ECS update steps go here once ECS cluster and services are set up
+      # - name: Update API ECS service
+      #   run: |
+      #     aws ecs update-service \
+      #       --cluster bird-ml-cluster \
+      #       --service bird-ml-api \
+      #       --force-new-deployment \
+      #       --region ${{ env.AWS_REGION }}
+
+      # - name: Update frontend ECS service
+      #   run: |
+      #     aws ecs update-service \
+      #       --cluster bird-ml-cluster \
+      #       --service bird-ml-frontend \
+      #       --force-new-deployment \
+      #       --region ${{ env.AWS_REGION }}

@@ -26,6 +26,7 @@ from bird_classifier.config import (
     S3_MLRUNS_PREFIX,
 )
 from bird_classifier.data.ingestion import load_bird_dataset, upload_directory_to_s3
+from bird_classifier.data.dataset import build_idx_to_name, save_idx_to_name
 from bird_classifier.training.train import run_training
 from infrastructure.sagemaker.scripts._s3_utils import upload_file_to_s3
 
@@ -56,9 +57,15 @@ def parse_args() -> argparse.Namespace:
         help="Local path SageMaker uses for model output artifacts.",
     )
     parser.add_argument(
-    "--smoke-test",
-    action="store_true",
-    help="Use only classes 0 and 1 for quick local testing.",
+        "--smoke-test",
+        action="store_true",
+        help="Use a tiny subset for quick local testing.",
+    )
+    parser.add_argument(
+        "--skip-training",
+        type=str,
+        default="false",
+        help="Pass 'true' to skip training and use the existing EN_final.pth in S3.",
     )
     return parser.parse_args()
 
@@ -66,6 +73,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.skip_training.lower() == "true":
+        print("=== Skip-training mode: using existing EN_final.pth in S3 ===")
+        print("Loading dataset to regenerate class_names.json...")
+        dataset = load_bird_dataset()
+        class_names_path = MODELS_DIR / "class_names.json"
+        save_idx_to_name(build_idx_to_name(dataset), class_names_path)
+        class_names_uri = upload_file_to_s3(class_names_path)
+        print(f"Class names uploaded to {class_names_uri}")
+        print("Skipping training and MLflow sync.")
+        return
 
     mlflow.set_tracking_uri(f"file://{MLRUNS_DIR}")
 
@@ -90,13 +108,18 @@ def main() -> None:
             "n_warmup_epochs": 1,
             "n_finetune_epochs": 1,
         }
-        
+
     print("=== Step 3/4: Running two-stage training ===")
     checkpoint_path = run_training(dataset=dataset, params=params)
 
     print("=== Step 4/4: Uploading artifacts to S3 ===")
     model_uri = upload_file_to_s3(checkpoint_path)
     print(f"Checkpoint uploaded to {model_uri}")
+
+    class_names_path = MODELS_DIR / "class_names.json"
+    save_idx_to_name(build_idx_to_name(dataset), class_names_path)
+    class_names_uri = upload_file_to_s3(class_names_path)
+    print(f"Class names uploaded to {class_names_uri}")
 
     upload_directory_to_s3(
         local_dir=MLRUNS_DIR,

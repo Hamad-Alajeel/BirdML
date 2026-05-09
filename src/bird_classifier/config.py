@@ -4,8 +4,9 @@ from pathlib import Path
 
 # ─── AWS / S3 ─────────────────────────────────────────────────────────────────
 
-AWS_REGION = "us-east-2"
-S3_BUCKET = "bird-ml-halajeel"
+AWS_ACCOUNT_ID = "798092529023"
+AWS_REGION     = "us-east-2"
+S3_BUCKET      = "bird-ml-halajeel"
 
 S3_DATA_PREFIX     = "data/raw/birds-525"
 S3_PARAMS_PREFIX   = "params"
