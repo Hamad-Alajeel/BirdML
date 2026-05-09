@@ -26,8 +26,9 @@ RUN pip install --no-cache-dir \
 COPY src/ src/
 COPY infrastructure/ infrastructure/
 COPY models/ models/
-# Make bird_classifier and the infrastructure scripts importable
-ENV PYTHONPATH=/opt/ml/code/src:/opt/ml/code
+# Make bird_classifier and the infrastructure scripts importable.
+# A .pth file in site-packages survives even when SageMaker wipes PYTHONPATH.
+RUN python -c "import site, pathlib; pathlib.Path(site.getsitepackages()[0], 'bird_ml.pth').write_text('/opt/ml/code/src\n/opt/ml/code\n')"
 
 # SageMaker passes the specific entry point script as the command, e.g.:
 #   python infrastructure/sagemaker/scripts/run_quality_check.py
