@@ -53,15 +53,27 @@ jobs:
           docker build -f infrastructure/docker/Dockerfile.training -t $ECR_REPO:latest .
           docker push $ECR_REPO:latest
 
+      - name: Install boto3
+        run: pip install boto3
+
       - name: Trigger SageMaker pipeline
         env:
+          RETUNE: ${{ github.event.inputs.retune || 'false' }}
+          SKIP_TRAINING: ${{ github.event.inputs.skip_training || 'false' }}
+          TUNE_TRIALS: ${{ github.event.inputs.tune_trials || '30' }}
           TUNE_PARAMS: ${{ github.event.inputs.tune_params || 'lr_head,lr_backbone,n_warmup_epochs' }}
         run: |
-          aws sagemaker start-pipeline-execution \
-            --pipeline-name bird-ml-training \
-            --pipeline-parameters \
-              "Name=RetuneHyperparameters,Value=${{ github.event.inputs.retune || 'false' }}" \
-              "Name=SkipTraining,Value=${{ github.event.inputs.skip_training || 'false' }}" \
-              "Name=TuneTrials,Value=${{ github.event.inputs.tune_trials || '30' }}" \
-              "Name=TuneParams,Value=$TUNE_PARAMS" \
-            --region ${{ env.AWS_REGION }}
+          python3 -c "
+          import boto3, os
+          client = boto3.client('sagemaker', region_name='${{ env.AWS_REGION }}')
+          response = client.start_pipeline_execution(
+              PipelineName='bird-ml-training',
+              PipelineParameters=[
+                  {'Name': 'RetuneHyperparameters', 'Value': os.environ['RETUNE']},
+                  {'Name': 'SkipTraining',           'Value': os.environ['SKIP_TRAINING']},
+                  {'Name': 'TuneTrials',             'Value': os.environ['TUNE_TRIALS']},
+                  {'Name': 'TuneParams',             'Value': os.environ['TUNE_PARAMS']},
+              ]
+          )
+          print('Pipeline triggered:', response['PipelineExecutionArn'])
+          "
