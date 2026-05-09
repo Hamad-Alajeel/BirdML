@@ -54,12 +54,14 @@ jobs:
           docker push $ECR_REPO:latest
 
       - name: Trigger SageMaker pipeline
+        env:
+          TUNE_PARAMS: ${{ github.event.inputs.tune_params || 'lr_head,lr_backbone,n_warmup_epochs' }}
         run: |
           aws sagemaker start-pipeline-execution \
             --pipeline-name bird-ml-training \
             --pipeline-parameters \
-              Name=RetuneHyperparameters,Value=${{ github.event.inputs.retune || 'false' }} \
-              Name=SkipTraining,Value=${{ github.event.inputs.skip_training || 'false' }} \
-              Name=TuneTrials,Value=${{ github.event.inputs.tune_trials || '30' }} \
-              Name=TuneParams,Value="${{ github.event.inputs.tune_params || 'lr_head,lr_backbone,n_warmup_epochs' }}" \
+              "Name=RetuneHyperparameters,Value=${{ github.event.inputs.retune || 'false' }}" \
+              "Name=SkipTraining,Value=${{ github.event.inputs.skip_training || 'false' }}" \
+              "Name=TuneTrials,Value=${{ github.event.inputs.tune_trials || '30' }}" \
+              "Name=TuneParams,Value=$TUNE_PARAMS" \
             --region ${{ env.AWS_REGION }}
