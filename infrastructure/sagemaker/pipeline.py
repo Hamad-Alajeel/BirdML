@@ -1,11 +1,16 @@
 """SageMaker Pipeline definition for the Bird Species Classifier."""
 
+import argparse
+import logging
+
 # Python 3.13 changed pathlib.Path.exists() error handling in a way that breaks
 # the SageMaker SDK's studio config lookup. This patch skips the lookup entirely.
 import sagemaker._studio as _studio
 _studio._find_config = lambda working_dir: None
 
 from sagemaker.model import Model
+from sagemaker.workflow.condition_step import ConditionStep
+from sagemaker.workflow.conditions import ConditionEquals
 from sagemaker.workflow.pipeline_context import PipelineSession
 from sagemaker.processing import ScriptProcessor
 from sagemaker.workflow.model_step import ModelStep
@@ -14,6 +19,12 @@ from sagemaker.workflow.pipeline import Pipeline
 from sagemaker.workflow.steps import ProcessingStep
 
 from bird_classifier.config import AWS_ACCOUNT_ID, AWS_REGION, S3_BUCKET
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/BirdMLSageMakerRole"
 IMAGE_URI = f"{AWS_ACCOUNT_ID}.dkr.ecr.{AWS_REGION}.amazonaws.com/bird-ml-training:latest"
@@ -62,29 +73,38 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
     )
 
     # ── Step 2: Hyperparameter Tuning ─────────────────────────────────────────
-    # Always runs but skips internally when RetuneHyperparameters=false.
+    # Wrapped in a ConditionStep: only runs when RetuneHyperparameters=true.
     # When enabled, searches the hyperparameter space and writes best_params.json to S3.
     tune_step = ProcessingStep(
         name="HyperparameterTuning",
         processor=gpu_processor,
         code="infrastructure/sagemaker/scripts/run_tune.py",
         job_arguments=[
-            "--retune", retune,
             "--n-trials", tune_trials,
             "--tune-params", tune_params,
         ],
+    )
+
+    # The condition step is the actual node in the pipeline DAG. tune_step
+    # becomes a nested child that runs only when retune == "true".
+    should_tune_step = ConditionStep(
+        name="ShouldTune",
+        conditions=[ConditionEquals(left=retune, right="true")],
+        if_steps=[tune_step],
+        else_steps=[],
         depends_on=[quality_step],
     )
 
     # ── Step 3: Final Training ─────────────────────────────────────────────────
     # Always runs unless SkipTraining=true. Reads best_params.json from S3 if
-    # it exists, otherwise falls back to BEST_PARAMS in config.
+    # it exists, otherwise falls back to BEST_PARAMS in config. Depends on the
+    # ConditionStep itself so it runs whether tuning happened or was skipped.
     train_step = ProcessingStep(
         name="FinalTraining",
         processor=gpu_processor,
         code="infrastructure/sagemaker/scripts/run_train.py",
         job_arguments=["--skip-training", skip_training],
-        depends_on=[tune_step],
+        depends_on=[should_tune_step],
     )
 
     # ── Step 4: Evaluation ────────────────────────────────────────────────────
@@ -123,12 +143,41 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
     return Pipeline(
         name=PIPELINE_NAME,
         parameters=[retune, skip_training, tune_params, tune_trials],
-        steps=[quality_step, tune_step, train_step, eval_step, register_step],
+        steps=[quality_step, should_tune_step, train_step, eval_step, register_step],
         sagemaker_session=session,
     )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Upsert the SageMaker training pipeline and optionally start an execution."
+    )
+    parser.add_argument("--retune", default="false")
+    parser.add_argument("--skip-training", default="false")
+    parser.add_argument("--tune-trials", default="30")
+    parser.add_argument("--tune-params", default="lr_head,lr_backbone,n_warmup_epochs")
+    parser.add_argument(
+        "--no-start",
+        action="store_true",
+        help="Only upsert the pipeline definition; do not trigger an execution.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_args()
+
     pipeline = build_pipeline()
     pipeline.upsert(role_arn=ROLE_ARN)
-    print(f"Pipeline '{PIPELINE_NAME}' registered in SageMaker.")
+    logger.info("Pipeline '%s' upserted.", PIPELINE_NAME)
+
+    if args.no_start:
+        logger.info("--no-start set; skipping pipeline execution.")
+    else:
+        execution = pipeline.start(parameters={
+            "RetuneHyperparameters": args.retune,
+            "SkipTraining":          args.skip_training,
+            "TuneTrials":            args.tune_trials,
+            "TuneParams":            args.tune_params,
+        })
+        logger.info("Pipeline execution started: %s", execution.arn)

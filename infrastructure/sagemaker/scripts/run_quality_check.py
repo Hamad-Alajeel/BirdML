@@ -13,6 +13,7 @@ SageMaker executes this script directly inside the container. It runs top-to-bot
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -23,6 +24,12 @@ from bird_classifier.data.quality import (
     run_data_quality_checks,
     save_report_to_s3,
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,27 +47,27 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    print("=== Step 1/4: Syncing dataset from S3 and loading splits ===")
+    logger.info("=== Step 1/4: Syncing dataset from S3 and loading splits ===")
     dataset = load_bird_dataset()
 
-    print("=== Step 2/4: Running data quality checks ===")
+    logger.info("=== Step 2/4: Running data quality checks ===")
     report = run_data_quality_checks(dataset=dataset, max_images_per_split=None)
     print_quality_report(report)
 
-    print("=== Step 3/4: Writing report to SageMaker output path ===")
+    logger.info("=== Step 3/4: Writing report to SageMaker output path ===")
     report_path = args.output_dir / "data_quality_report.json"
     report_path.write_text(json.dumps(report_to_dict(report), indent=2))
-    print(f"Report written to {report_path}")
+    logger.info("Report written to %s", report_path)
 
-    print("=== Step 4/4: Uploading report to S3 ===")
+    logger.info("=== Step 4/4: Uploading report to S3 ===")
     s3_uri = save_report_to_s3(report)
-    print(f"Report uploaded to {s3_uri}")
+    logger.info("Report uploaded to %s", s3_uri)
 
     if not report.passed:
-        print("\nERROR: Data quality checks failed — aborting pipeline.")
+        logger.error("Data quality checks failed — aborting pipeline.")
         sys.exit(1)
 
-    print("\nData quality checks passed.")
+    logger.info("Data quality checks passed.")
 
 
 if __name__ == "__main__":

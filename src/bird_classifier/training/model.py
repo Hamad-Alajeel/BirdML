@@ -2,19 +2,41 @@
 
 from pathlib import Path
 
+import boto3
 import torch
 import torch.nn as nn
 from torchvision.models import efficientnet_b3
 
 from bird_classifier.config import (
+    AWS_REGION,
     EFFICIENTNET_B3_WEIGHTS_FILENAME,
     MODELS_DIR,
     NUM_CLASSES,
+    S3_BUCKET,
+    S3_MODELS_PREFIX,
 )
 
 
 def get_device() -> torch.device:
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def ensure_pretrained_weights_local(
+    weights_path: Path,
+    bucket: str = S3_BUCKET,
+    key: str = f"{S3_MODELS_PREFIX}/{EFFICIENTNET_B3_WEIGHTS_FILENAME}",
+    region: str = AWS_REGION,
+) -> None:
+    """Download the EfficientNet-B3 pretrained weights from S3 if not already cached locally."""
+    if weights_path.exists():
+        return
+
+    weights_path.parent.mkdir(parents=True, exist_ok=True)
+    boto3.client("s3", region_name=region).download_file(
+        Bucket=bucket,
+        Key=key,
+        Filename=str(weights_path),
+    )
 
 
 def build_model(
@@ -30,6 +52,8 @@ def build_model(
     """
     if weights_path is None:
         weights_path = MODELS_DIR / EFFICIENTNET_B3_WEIGHTS_FILENAME
+
+    ensure_pretrained_weights_local(weights_path)
 
     model = efficientnet_b3(weights=None)
     model.load_state_dict(

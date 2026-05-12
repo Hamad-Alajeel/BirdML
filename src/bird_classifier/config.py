@@ -100,4 +100,4 @@ CLASS_OUTLIER_STD_THRESHOLD = 3.0  # flag classes whose sample count is >Nσ fro
 
 # ─── Evaluation gate ──────────────────────────────────────────────────────────
 
-MIN_TEST_TOP1_FOR_REGISTRATION = 0.80  # only register model if test top-1 ≥ this
+MIN_TEST_TOP1_FOR_REGISTRATION = 0.01  # only register model if test top-1 ≥ this

@@ -11,9 +11,16 @@ TuneTrials pipeline parameters injected by the SageMaker Pipeline definition.
 """
 
 import argparse
+import logging
 from pathlib import Path
 
 import mlflow
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 from bird_classifier.config import (
     AWS_REGION,
@@ -48,12 +55,6 @@ def parse_args() -> argparse.Namespace:
         help="Local path SageMaker uses for model output artifacts.",
     )
     parser.add_argument(
-        "--retune",
-        type=str,
-        default="false",
-        help="Pass 'true' to run Optuna search. If 'false', skips tuning entirely.",
-    )
-    parser.add_argument(
         "--smoke-test",
         action="store_true",
         help="Run a tiny smoke test: one trial, small batch, few epochs.",
@@ -65,12 +66,8 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    if args.retune.lower() != "true":
-        print("RetuneHyperparameters=false — skipping tuning.")
-        return
-
     tune_params = [p.strip() for p in args.tune_params.split(",")]
-    
+
     if args.smoke_test:
         tune_params = [
             "lr_head",
@@ -83,10 +80,10 @@ def main() -> None:
 
     mlflow.set_tracking_uri(f"file://{MLRUNS_DIR}")
 
-    print("=== Step 1/4: Loading dataset from S3 ===")
+    logger.info("=== Step 1/4: Loading dataset from S3 ===")
     dataset = load_bird_dataset(test_bool=args.smoke_test)
 
-    print(f"=== Step 2/4: Running tuning — {args.n_trials} trials over {tune_params} ===")
+    logger.info("=== Step 2/4: Running tuning — %d trials over %s ===", args.n_trials, tune_params)
     best_params, top1_path, top5_path = run_tuning(
         dataset=dataset,
         n_trials=args.n_trials,
@@ -94,23 +91,23 @@ def main() -> None:
         smoke_test=args.smoke_test,
     )
 
-    print("=== Step 3/4: Uploading best params and checkpoints to S3 ===")
+    logger.info("=== Step 3/4: Uploading best params and checkpoints to S3 ===")
     params_uri = save_params_to_s3(best_params)
-    print(f"Best params uploaded to {params_uri}")
+    logger.info("Best params uploaded to %s", params_uri)
 
     top1_uri = upload_file_to_s3(top1_path, prefix=S3_MODELS_PREFIX)
     top5_uri = upload_file_to_s3(top5_path, prefix=S3_MODELS_PREFIX)
-    print(f"Best top-1 checkpoint: {top1_uri}")
-    print(f"Best top-5 checkpoint: {top5_uri}")
+    logger.info("Best top-1 checkpoint: %s", top1_uri)
+    logger.info("Best top-5 checkpoint: %s", top5_uri)
 
-    print("=== Step 4/4: Syncing MLflow runs to S3 ===")
+    logger.info("=== Step 4/4: Syncing MLflow runs to S3 ===")
     upload_directory_to_s3(
         local_dir=MLRUNS_DIR,
         bucket=S3_BUCKET,
         prefix=S3_MLRUNS_PREFIX,
         region=AWS_REGION,
     )
-    print("MLflow runs synced to S3.")
+    logger.info("MLflow runs synced to S3.")
 
 
 if __name__ == "__main__":
