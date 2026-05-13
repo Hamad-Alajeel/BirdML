@@ -14,8 +14,22 @@ SageMaker executes this script directly inside the container. It runs top-to-bot
 import argparse
 import json
 import logging
+import os
 import sys
 from pathlib import Path
+
+# --- DEBUG DIAGNOSTIC — remove after import issue is resolved ---
+print("=" * 70, flush=True)
+print("CWD:", os.getcwd(), flush=True)
+for p in ["/opt/ml", "/opt/ml/code", "/opt/ml/code/src", "/opt/ml/code/src/bird_classifier"]:
+    exists = os.path.exists(p)
+    print(f"{p} exists? {exists}", flush=True)
+    if exists and os.path.isdir(p):
+        print(f"  contents: {os.listdir(p)}", flush=True)
+print("PYTHONPATH env:", os.environ.get("PYTHONPATH"), flush=True)
+print("sys.path:", sys.path, flush=True)
+print("=" * 70, flush=True)
+# --- END DEBUG ---
 
 # SageMaker strips PYTHONPATH from the Dockerfile ENV; restore it here so
 # bird_classifier (in /opt/ml/code/src) and infrastructure (in /opt/ml/code) import.
