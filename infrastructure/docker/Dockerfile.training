@@ -22,9 +22,9 @@ RUN uv pip install --system --no-cache --requirement pyproject.toml
 COPY src/ src/
 COPY infrastructure/ infrastructure/
 
-# Copy bird_classifier and infrastructure directly into Python's site-packages
-# so they're importable regardless of how SageMaker invokes Python.
-RUN python -c "import site, os, shutil; sp = site.getsitepackages()[0]; shutil.copytree('/opt/ml/code/src/bird_classifier', os.path.join(sp, 'bird_classifier'), dirs_exist_ok=True); shutil.copytree('/opt/ml/code/infrastructure', os.path.join(sp, 'infrastructure'), dirs_exist_ok=True)"
+# Make bird_classifier (under src/) and infrastructure importable regardless of
+# how SageMaker invokes Python.
+ENV PYTHONPATH=/opt/ml/code/src:/opt/ml/code
 
 # SageMaker passes the specific entry point script as the command, e.g.:
 #   python infrastructure/sagemaker/scripts/run_quality_check.py
