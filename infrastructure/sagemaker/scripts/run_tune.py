@@ -55,6 +55,12 @@ def parse_args() -> argparse.Namespace:
         help="Local path SageMaker uses for model output artifacts.",
     )
     parser.add_argument(
+        "--retune",
+        type=str,
+        default="false",
+        help="Pass 'true' to run Optuna search. If 'false', exits immediately without tuning.",
+    )
+    parser.add_argument(
         "--smoke-test",
         action="store_true",
         help="Run a tiny smoke test: one trial, small batch, few epochs.",
@@ -65,6 +71,10 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.retune.lower() != "true":
+        logger.info("RetuneHyperparameters=false — skipping tuning.")
+        return
 
     tune_params = [p.strip() for p in args.tune_params.split(",")]
 

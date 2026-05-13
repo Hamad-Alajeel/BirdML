@@ -9,8 +9,6 @@ import sagemaker._studio as _studio
 _studio._find_config = lambda working_dir: None
 
 from sagemaker.model import Model
-from sagemaker.workflow.condition_step import ConditionStep
-from sagemaker.workflow.conditions import ConditionEquals
 from sagemaker.workflow.pipeline_context import PipelineSession
 from sagemaker.processing import ScriptProcessor
 from sagemaker.workflow.model_step import ModelStep
@@ -73,38 +71,29 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
     )
 
     # ── Step 2: Hyperparameter Tuning ─────────────────────────────────────────
-    # Wrapped in a ConditionStep: only runs when RetuneHyperparameters=true.
+    # Always runs but exits early inside run_tune.py when RetuneHyperparameters=false.
     # When enabled, searches the hyperparameter space and writes best_params.json to S3.
     tune_step = ProcessingStep(
         name="HyperparameterTuning",
         processor=gpu_processor,
         code="infrastructure/sagemaker/scripts/run_tune.py",
         job_arguments=[
+            "--retune", retune,
             "--n-trials", tune_trials,
             "--tune-params", tune_params,
         ],
-    )
-
-    # The condition step is the actual node in the pipeline DAG. tune_step
-    # becomes a nested child that runs only when retune == "true".
-    should_tune_step = ConditionStep(
-        name="ShouldTune",
-        conditions=[ConditionEquals(left=retune, right="true")],
-        if_steps=[tune_step],
-        else_steps=[],
         depends_on=[quality_step],
     )
 
     # ── Step 3: Final Training ─────────────────────────────────────────────────
     # Always runs unless SkipTraining=true. Reads best_params.json from S3 if
-    # it exists, otherwise falls back to BEST_PARAMS in config. Depends on the
-    # ConditionStep itself so it runs whether tuning happened or was skipped.
+    # it exists, otherwise falls back to BEST_PARAMS in config.
     train_step = ProcessingStep(
         name="FinalTraining",
         processor=gpu_processor,
         code="infrastructure/sagemaker/scripts/run_train.py",
         job_arguments=["--skip-training", skip_training],
-        depends_on=[should_tune_step],
+        depends_on=[tune_step],
     )
 
     # ── Step 4: Evaluation ────────────────────────────────────────────────────
@@ -143,7 +132,7 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
     return Pipeline(
         name=PIPELINE_NAME,
         parameters=[retune, skip_training, tune_params, tune_trials],
-        steps=[quality_step, should_tune_step, train_step, eval_step, register_step],
+        steps=[quality_step, tune_step, train_step, eval_step, register_step],
         sagemaker_session=session,
     )
 
