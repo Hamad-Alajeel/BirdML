@@ -62,8 +62,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--smoke-test",
-        action="store_true",
-        help="Run a tiny smoke test: one trial, small batch, few epochs.",
+        type=str,
+        default="false",
+        help="Pass 'true' to run a tiny smoke test: one trial, small batch, few epochs.",
     )
     return parser.parse_args()
 
@@ -72,13 +73,15 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
+    smoke_test = args.smoke_test.lower() == "true"
+
     if args.retune.lower() != "true":
         logger.info("RetuneHyperparameters=false — skipping tuning.")
         return
 
     tune_params = [p.strip() for p in args.tune_params.split(",")]
 
-    if args.smoke_test:
+    if smoke_test:
         tune_params = [
             "lr_head",
             "lr_backbone",
@@ -91,14 +94,14 @@ def main() -> None:
     mlflow.set_tracking_uri(f"file://{MLRUNS_DIR}")
 
     logger.info("=== Step 1/4: Loading dataset from S3 ===")
-    dataset = load_bird_dataset(test_bool=args.smoke_test)
+    dataset = load_bird_dataset(test_bool=smoke_test)
 
     logger.info("=== Step 2/4: Running tuning — %d trials over %s ===", args.n_trials, tune_params)
     best_params, top1_path, top5_path = run_tuning(
         dataset=dataset,
         n_trials=args.n_trials,
         tune_params=tune_params,
-        smoke_test=args.smoke_test,
+        smoke_test=smoke_test,
     )
 
     logger.info("=== Step 3/4: Uploading best params and checkpoints to S3 ===")

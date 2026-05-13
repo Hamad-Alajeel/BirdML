@@ -65,8 +65,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--smoke-test",
-        action="store_true",
-        help="Use a tiny subset for quick local testing.",
+        type=str,
+        default="false",
+        help="Pass 'true' to use a tiny subset for quick local testing.",
     )
     parser.add_argument(
         "--skip-training",
@@ -80,6 +81,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    smoke_test = args.smoke_test.lower() == "true"
 
     if args.skip_training.lower() == "true":
         logger.info("=== Skip-training mode: using existing EN_final.pth in S3 ===")
@@ -95,7 +98,7 @@ def main() -> None:
     mlflow.set_tracking_uri(f"file://{MLRUNS_DIR}")
 
     logger.info("=== Step 1/4: Loading dataset from S3 ===")
-    dataset = load_bird_dataset(test_bool=args.smoke_test)
+    dataset = load_bird_dataset(test_bool=smoke_test)
 
     logger.info("=== Step 2/4: Loading hyperparameters ===")
     params = load_params_from_s3()
@@ -107,7 +110,7 @@ def main() -> None:
         logger.info("Loaded params from s3://%s/%s", S3_BUCKET, S3_BEST_PARAMS_KEY)
     logger.info("Hyperparameters:\n%s", json.dumps(params, indent=2))
 
-    if args.smoke_test:
+    if smoke_test:
         logger.warning("Smoke test mode enabled: overriding training params.")
         params = {
             **params,

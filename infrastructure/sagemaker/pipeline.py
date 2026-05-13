@@ -38,6 +38,7 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
     # SageMaker ProcessingStep job_arguments only accepts string values.
     retune = ParameterString("RetuneHyperparameters", default_value="false")
     skip_training = ParameterString("SkipTraining", default_value="false")
+    smoke_test = ParameterString("SmokeTest", default_value="false")
     tune_params = ParameterString(
         "TuneParams", default_value="lr_head,lr_backbone,n_warmup_epochs"
     )
@@ -81,6 +82,7 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
             "--retune", retune,
             "--n-trials", tune_trials,
             "--tune-params", tune_params,
+            "--smoke-test", smoke_test,
         ],
         depends_on=[quality_step],
     )
@@ -92,7 +94,10 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
         name="FinalTraining",
         processor=gpu_processor,
         code="infrastructure/sagemaker/scripts/run_train.py",
-        job_arguments=["--skip-training", skip_training],
+        job_arguments=[
+            "--skip-training", skip_training,
+            "--smoke-test", smoke_test,
+        ],
         depends_on=[tune_step],
     )
 
@@ -131,7 +136,7 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
 
     return Pipeline(
         name=PIPELINE_NAME,
-        parameters=[retune, skip_training, tune_params, tune_trials],
+        parameters=[retune, skip_training, smoke_test, tune_params, tune_trials],
         steps=[quality_step, tune_step, train_step, eval_step, register_step],
         sagemaker_session=session,
     )
@@ -143,6 +148,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--retune", default="false")
     parser.add_argument("--skip-training", default="false")
+    parser.add_argument("--smoke-test", default="false")
     parser.add_argument("--tune-trials", default="30")
     parser.add_argument("--tune-params", default="lr_head,lr_backbone,n_warmup_epochs")
     parser.add_argument(
@@ -166,6 +172,7 @@ if __name__ == "__main__":
         execution = pipeline.start(parameters={
             "RetuneHyperparameters": args.retune,
             "SkipTraining":          args.skip_training,
+            "SmokeTest":             args.smoke_test,
             "TuneTrials":            args.tune_trials,
             "TuneParams":            args.tune_params,
         })

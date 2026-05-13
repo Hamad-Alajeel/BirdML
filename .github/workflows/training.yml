@@ -17,6 +17,12 @@ on:
         default: 'false'
         type: choice
         options: ['true', 'false']
+      smoke_test:
+        description: 'Smoke test mode: tiny subset, 1 epoch, 1 tuning trial'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
       tune_trials:
         description: 'Number of Optuna trials (only used if retune=true)'
         required: false
@@ -73,5 +79,6 @@ jobs:
           python infrastructure/sagemaker/pipeline.py \
             --retune "${{ github.event.inputs.retune }}" \
             --skip-training "${{ github.event.inputs.skip_training }}" \
+            --smoke-test "${{ github.event.inputs.smoke_test }}" \
             --tune-trials "${{ github.event.inputs.tune_trials }}" \
             --tune-params "${{ github.event.inputs.tune_params }}"
