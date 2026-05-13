@@ -26,7 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/BirdMLSageMakerRole"
+ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/AmazonSageMakerUserIAMExecutionRole_1ab88b8d"
 IMAGE_URI = f"{AWS_ACCOUNT_ID}.dkr.ecr.{AWS_REGION}.amazonaws.com/bird-ml-training:latest"
 PIPELINE_NAME = "bird-ml-training"
 
