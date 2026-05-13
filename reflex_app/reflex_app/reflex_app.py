@@ -1,30 +1,58 @@
 import reflex as rx
-import random  # Used to simulate model outputs
+
 
 # --- STATE MANAGEMENT ---
 class State(rx.State):
-    """Handles the application logic, image upload, and model execution."""
-    # Track upload status and results
+    """Handles the application logic, image upload, and carousel navigation."""
+
+    # Upload state
     is_processing: bool = False
     image_uploaded: bool = False
     img_path: str = ""
 
-    # Store top 5 predictions as a list of dictionaries
-    top_predictions: list[dict] = []
+    # Carousel state
+    cards_visible: bool = False
+    current_card: int = 0
 
-    # Mock model latency metric for MLOps tracking
-    inference_time: str = "0.00ms"
+    # Placeholder card names — replace with model output once wired
+    card_names: list[str] = [
+        "Placeholder Bird 1",
+        "Placeholder Bird 2",
+        "Placeholder Bird 3",
+        "Placeholder Bird 4",
+        "Placeholder Bird 5",
+    ]
+
+    @rx.var
+    def num_cards(self) -> int:
+        return len(self.card_names)
+
+    @rx.var
+    def current_card_label(self) -> str:
+        return f"#{self.current_card + 1} of {self.num_cards}"
+
+    @rx.var
+    def current_card_name(self) -> str:
+        return self.card_names[self.current_card]
+
+    @rx.var
+    def is_first_card(self) -> bool:
+        return self.current_card == 0
+
+    @rx.var
+    def is_last_card(self) -> bool:
+        return self.current_card == self.num_cards - 1
 
     async def handle_upload(self, files: list[rx.UploadFile]):
-        """Processes the uploaded bird image and triggers model inference."""
+        """Processes the uploaded bird image and triggers (mock) model inference."""
         if not files:
             return
 
         self.is_processing = True
-        self.image_uploaded = False
+        self.cards_visible = False
         yield  # Update UI to show loading spinner
 
-        # 1. Save uploaded file to the local assets directory
+        # Save uploaded file to the local assets directory
         upload_data = await files[0].read()
         outline_path = rx.get_asset_path(files[0].filename)
         with open(outline_path, "wb") as f:
@@ -33,60 +61,62 @@ class State(rx.State):
         self.img_path = files[0].filename
         self.image_uploaded = True
 
-        # 2. Simulate Machine Learning Model Inference
-        # In production, replace this block with your PyTorch/TensorFlow/YOLO code:
-        # result = my_bird_model(outline_path)
-        import time
-        start_time = time.time()
-
-        # Mocking model response logic
-        birds = ["Bald Eagle", "Peregrine Falcon", "Red-tailed Hawk", "Osprey", "Golden Eagle", "Barn Owl", "Blue Jay"]
-        selected_birds = random.sample(birds, 5)
-
-        # Generate 5 random descending probabilities that sum close to 100%
-        probs = sorted([random.randint(50, 95), random.randint(20, 45), random.randint(10, 25), random.randint(5, 15), random.randint(1, 5)], reverse=True)
-
-        self.top_predictions = [
-            {"rank": i+1, "species": selected_birds[i], "confidence": f"{probs[i]}%"}
-            for i in range(5)
-        ]
-
-        # Calculate mock telemetry metrics
-        self.inference_time = f"{(time.time() - start_time + 0.124) * 1000:.2f}ms"
+        # Reveal the carousel with placeholder cards
+        self.current_card = 0
+        self.cards_visible = True
         self.is_processing = False
+
+    def next_card(self):
+        if self.current_card < self.num_cards - 1:
+            self.current_card += 1
+
+    def prev_card(self):
+        if self.current_card > 0:
+            self.current_card -= 1
 
 
 # --- UI COMPONENTS ---
-def prediction_card(bird: dict) -> rx.Component:
-    """Component template for a single styled prediction card."""
-    return rx.card(
-        rx.hstack(
-            rx.badge(
-                bird["rank"],
-                variant="solid",
-                color_scheme="blue",
-                radius="full",
-                size="2"
-            ),
-            rx.vstack(
-                rx.text(bird["species"], weight="bold", font_size="1rem"),
-                rx.text(f"Confidence: {bird['confidence']}", size="2", color_scheme="gray"),
-                align_items="start",
-                spacing="1"
-            ),
-            justify="start",
-            align_items="center",
-            spacing="3",
+def carousel_card() -> rx.Component:
+    """A single placeholder card centered between left/right arrow buttons."""
+    return rx.hstack(
+        rx.button(
+            rx.icon("chevron-left", size=22),
+            on_click=State.prev_card,
+            disabled=State.is_first_card,
+            variant="soft",
+            size="3",
         ),
-        variant="surface",
+        rx.card(
+            rx.vstack(
+                rx.text(State.current_card_label, size="2", color_scheme="gray"),
+                rx.heading(State.current_card_name, size="5"),
+                rx.text("(placeholder card)", size="2", color_scheme="gray", italic=True),
+                align_items="center",
+                spacing="3",
+                padding_y="6",
+            ),
+            variant="surface",
+            width="320px",
+            height="200px",
+        ),
+        rx.button(
+            rx.icon("chevron-right", size=22),
+            on_click=State.next_card,
+            disabled=State.is_last_card,
+            variant="soft",
+            size="3",
+        ),
+        align_items="center",
+        spacing="4",
+        justify="center",
         width="100%",
-        padding="4",
     )
+
 
 def index() -> rx.Component:
     """The main dashboard layout structure."""
     return rx.container(
-        # Top Header Banner
+        # Top Header
         rx.vstack(
             rx.heading("🦅 OrniTrack AI", size="8", margin_bottom="2"),
             rx.text("Enterprise Computer Vision Pipeline for Avian Species Classification", color_scheme="gray"),
@@ -118,7 +148,6 @@ def index() -> rx.Component:
                     width="100%",
                     color_scheme="blue"
                 ),
-                # Show uploaded image preview if available
                 rx.cond(
                     State.image_uploaded,
                     rx.box(
@@ -131,43 +160,36 @@ def index() -> rx.Component:
                 align_items="start",
             ),
 
-            # Right Column: Model Output Cards & MLOps Telemetry
+            # Right Column: Carousel of placeholder cards
             rx.vstack(
-                rx.hstack(
-                    rx.heading("Model Telemetry", size="4"),
-                    rx.badge(f"Latency: {State.inference_time}", color_scheme="green", variant="surface"),
-                    justify="between",
-                    width="100%"
-                ),
-
-                # Dynamic rendering conditional block
+                rx.heading("Top 5 Predictions", size="4"),
                 rx.cond(
-                    State.top_predictions,
-                    # Iterate and render prediction_card for each item in the top_predictions array
-                    rx.vstack(
-                        rx.foreach(State.top_predictions, prediction_card),
-                        width="100%",
-                        spacing="3"
-                    ),
-                    # Fallback message before user uploads anything
+                    State.cards_visible,
+                    carousel_card(),
                     rx.center(
-                        rx.text("Upload a bird image to view top 5 classifications.", color_scheme="gray", italic=True),
+                        rx.text(
+                            "Upload an image and run inference to view the top 5 classifications.",
+                            color_scheme="gray",
+                            italic=True,
+                        ),
                         border="1px dashed var(--gray-4)",
                         radius="md",
                         width="100%",
-                        height="200px"
-                    )
+                        height="200px",
+                    ),
                 ),
                 spacing="4",
                 align_items="start",
+                width="100%",
             ),
             columns="2",
             spacing="6",
             width="100%",
         ),
         max_width="1050px",
-        padding_x="4"
+        padding_x="4",
     )
+
 
 # --- APP CONFIGURATION ---
 app = rx.App(
@@ -175,7 +197,7 @@ app = rx.App(
         appearance="dark",
         has_background=True,
         radius="medium",
-        accent_color="blue"
+        accent_color="blue",
     )
 )
 app.add_page(index)
