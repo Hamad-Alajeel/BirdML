@@ -12,6 +12,7 @@ TuneTrials pipeline parameters injected by the SageMaker Pipeline definition.
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 import mlflow
@@ -21,6 +22,11 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# SageMaker strips PYTHONPATH from the Dockerfile ENV; restore it here so
+# bird_classifier (in /opt/ml/code/src) and infrastructure (in /opt/ml/code) import.
+sys.path.insert(0, "/opt/ml/code/src")
+sys.path.insert(0, "/opt/ml/code")
 
 from bird_classifier.config import (
     AWS_REGION,

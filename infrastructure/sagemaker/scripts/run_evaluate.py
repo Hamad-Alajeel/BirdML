@@ -14,6 +14,11 @@ Two gates stand between evaluation and deployment:
 import logging
 import sys
 
+# SageMaker strips PYTHONPATH from the Dockerfile ENV; restore it here so
+# bird_classifier (in /opt/ml/code/src) and infrastructure (in /opt/ml/code) import.
+sys.path.insert(0, "/opt/ml/code/src")
+sys.path.insert(0, "/opt/ml/code")
+
 from bird_classifier.config import MIN_TEST_TOP1_FOR_REGISTRATION
 from bird_classifier.data.dataloaders import build_dataloaders
 from bird_classifier.data.dataset import build_label_mapping
