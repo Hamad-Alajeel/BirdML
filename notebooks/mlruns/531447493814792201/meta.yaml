@@ -1,0 +1,8 @@
+artifact_location: file:///opt/ml/code/mlruns/531447493814792201
+creation_time: 1777628142267
+experiment_id: '531447493814792201'
+last_update_time: 1777628142267
+lifecycle_stage: active
+name: bird_training
+trace_location: null
+workspace: default

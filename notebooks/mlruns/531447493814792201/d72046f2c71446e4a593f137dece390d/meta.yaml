@@ -1,0 +1,14 @@
+artifact_uri: file:///opt/ml/code/mlruns/531447493814792201/d72046f2c71446e4a593f137dece390d/artifacts
+end_time: 1777628266862
+entry_point_name: ''
+experiment_id: '531447493814792201'
+lifecycle_stage: active
+run_id: d72046f2c71446e4a593f137dece390d
+run_name: final_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777628142966
+status: 3
+tags: []
+user_id: root

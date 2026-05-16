@@ -1,4 +1,8 @@
-artifact_location: file:///C:/Users/hamad/Desktop/Bird%20ML/notebooks/mlruns/0
+artifact_location: file:///home/sagemaker-user/mlruns/0
+creation_time: 1778711072624
 experiment_id: '0'
+last_update_time: 1778711072624
 lifecycle_stage: active
 name: Default
+trace_location: null
+workspace: default

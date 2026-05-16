@@ -1,0 +1,7 @@
+.venv*/
+.web/
+.states/
+__pycache__/
+*.pyc
+uploaded_files/
+*.log

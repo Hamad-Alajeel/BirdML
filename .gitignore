@@ -9,8 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
-# Dataset
-data/
+# Dataset (only the root-level data folder, not src/bird_classifier/data/)
+/data/
 
 # Secrets
 secrets/

@@ -1,0 +1,6 @@
+artifact_location: file:///mnt/custom-file-systems/s3/shared/mlruns/481170617369264279
+creation_time: 1777447129488
+experiment_id: '481170617369264279'
+last_update_time: 1777447129488
+lifecycle_stage: active
+name: bird_finetuning

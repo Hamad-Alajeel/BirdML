@@ -1,0 +1,15 @@
+artifact_uri: file:///mnt/custom-file-systems/s3/shared/mlruns/481170617369264279/5acd19cacc4646f083daa93ca4e1831a/artifacts
+end_time: 1777484446795
+entry_point_name: ''
+experiment_id: '481170617369264279'
+lifecycle_stage: active
+run_id: 5acd19cacc4646f083daa93ca4e1831a
+run_name: trial_4
+run_uuid: 5acd19cacc4646f083daa93ca4e1831a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777476983322
+status: 3
+tags: []
+user_id: sagemaker-user

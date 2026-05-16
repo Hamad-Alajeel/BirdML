@@ -1,0 +1,493 @@
+"""All home-page UI building blocks.
+
+Pulled out of reflex_app.py verbatim so the home page logic stays
+unchanged — only the import path moved.
+"""
+
+import reflex as rx
+
+from ..state import State
+from ..styles import GRADIENT_TITLE
+
+
+def gradient_heading() -> rx.Component:
+    return rx.vstack(
+        # Inject the rainbow_shift keyframes once at render time. Reflex has
+        # no first-class keyframe helper, so we drop raw <style> here.
+        rx.html(
+            "<style>@keyframes rainbow_shift { "
+            "0% { background-position: 0% 50%; } "
+            "100% { background-position: 200% 50%; } "
+            "}</style>"
+        ),
+        rx.hstack(
+            rx.image(
+                src="https://cultofthepartyparrot.com/parrots/hd/parrot.gif",
+                height="72px",
+                width="72px",
+                style={"filter": "drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6))"},
+            ),
+            rx.heading(
+                "BirdML",
+                size="9",
+                style={
+                    "background-image": GRADIENT_TITLE,
+                    "background-size": "200% 100%",
+                    "background-clip": "text",
+                    "-webkit-background-clip": "text",
+                    "-webkit-text-fill-color": "transparent",
+                    "animation": "rainbow_shift 6s linear infinite",
+                    "filter": "drop-shadow(0 2px 12px rgba(236, 72, 153, 0.45))",
+                },
+                weight="bold",
+                letter_spacing="-0.02em",
+            ),
+            align_items="center",
+            spacing="4",
+            justify="center",
+        ),
+        rx.text(
+            "Upload a bird photo, run inference, browse the top 5 predictions.",
+            color="rgba(255, 255, 255, 0.85)",
+            size="3",
+            text_align="center",
+            style={"text-shadow": "0 1px 6px rgba(0, 0, 0, 0.6)"},
+        ),
+        align_items="center",
+        spacing="2",
+        width="100%",
+    )
+
+
+def image_preview() -> rx.Component:
+    return rx.center(
+        rx.cond(
+            State.has_image,
+            rx.image(
+                src=State.img_data_uri,
+                max_height="320px",
+                max_width="100%",
+                width="auto",
+                height="auto",
+                object_fit="contain",
+                border_radius="16px",
+                box_shadow="0 20px 50px -15px rgba(0, 0, 0, 0.7)",
+                border="2px solid rgba(255, 255, 255, 0.15)",
+            ),
+            rx.center(
+                rx.vstack(
+                    rx.icon("image", size=40, color="rgba(255, 255, 255, 0.55)"),
+                    rx.text(
+                        "Your image will appear here",
+                        color="rgba(255, 255, 255, 0.75)",
+                        size="2",
+                        style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
+                    ),
+                    align_items="center",
+                    spacing="2",
+                ),
+                width="100%",
+                max_width="420px",
+                height="220px",
+                border="1px dashed rgba(255, 255, 255, 0.4)",
+                border_radius="16px",
+                background="rgba(0, 0, 0, 0.18)",
+                backdrop_filter="blur(6px)",
+            ),
+        ),
+        width="100%",
+    )
+
+
+def upload_zone() -> rx.Component:
+    return rx.center(
+        rx.upload(
+            rx.vstack(
+                rx.icon("upload", size=28, color="#f0abfc"),
+                rx.text(
+                    "Drop a bird photo here",
+                    weight="medium",
+                    size="3",
+                    color="white",
+                    text_align="center",
+                    style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.6)"},
+                ),
+                rx.text(
+                    "or click to browse",
+                    size="2",
+                    color="rgba(255, 255, 255, 0.7)",
+                    text_align="center",
+                ),
+                align_items="center",
+                justify="center",
+                spacing="2",
+                width="100%",
+            ),
+            id="bird_uploader",
+            accept={"image/*": [".png", ".jpg", ".jpeg", ".webp"]},
+            max_files=1,
+            on_drop=State.handle_upload(rx.upload_files(upload_id="bird_uploader")),
+            border="2px dashed rgba(240, 171, 252, 0.5)",
+            border_radius="16px",
+            padding="5",
+            width="100%",
+            max_width="420px",
+            background="rgba(0, 0, 0, 0.18)",
+            backdrop_filter="blur(6px)",
+            _hover={
+                "border_color": "#f0abfc",
+                "background": "rgba(240, 171, 252, 0.1)",
+            },
+            transition="all 0.25s ease",
+            # Force the underlying dropzone div to flex-center its child vstack.
+            style={
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "text-align": "center",
+            },
+        ),
+        width="100%",
+    )
+
+
+def run_inference_button() -> rx.Component:
+    return rx.center(
+        rx.button(
+            rx.hstack(
+                rx.icon("zap", size=20),
+                rx.text("Run Inference", weight="bold"),
+                spacing="2",
+                align_items="center",
+            ),
+            on_click=State.run_inference,
+            disabled=~State.has_image,
+            size="4",
+            color_scheme="iris",
+            width="100%",
+            max_width="420px",
+            style={
+                "cursor": "pointer",
+                "box-shadow": "0 14px 30px -10px rgba(99, 102, 241, 0.7)",
+            },
+        ),
+        width="100%",
+    )
+
+
+def nn_animation() -> rx.Component:
+    """Pastel neural network with traveling-data effects on connections."""
+    # 5 layers, 3-4-4-4-3 — extra hidden layer in the middle.
+    layers = [3, 4, 4, 4, 3]
+    layer_xs = [180, 290, 380, 470, 580]
+    layer_colors = ["#f0abfc", "#e879f9", "#a78bfa", "#67e8f9", "#7dd3fc"]
+    layer_glow = ["#f5d0fe", "#f0abfc", "#c4b5fd", "#a5f3fc", "#bae6fd"]
+
+    canvas_height = 360
+
+    def y_positions(n: int, is_middle_layer: bool = False) -> list[float]:
+        spacing = canvas_height / (n + 1)
+        base = [spacing * (i + 1) for i in range(n)]
+        center = canvas_height / 2
+        # 3-node layers (input/output): compress toward center.
+        if n < 4:
+            return [center + (y - center) * 0.78 for y in base]
+        # Only the absolute middle layer gets the extra vertical stretch.
+        if is_middle_layer:
+            return [center + (y - center) * 1.18 for y in base]
+        return base
+
+    middle_idx = len(layers) // 2
+    positions = [
+        [(x, y) for y in y_positions(n, is_middle_layer=(i == middle_idx))]
+        for i, (x, n) in enumerate(zip(layer_xs, layers))
+    ]
+
+    # Each layer-pair starts its color cycle slightly later so the rainbow
+    # visibly propagates from input to output.
+    rainbow_values = (
+        "#ef4444;#f97316;#eab308;#22c55e;#06b6d4;#3b82f6;#a855f7;#ec4899;#ef4444"
+    )
+    line_parts: list[str] = []
+    for i in range(len(positions) - 1):
+        layer_delay = i * 0.4
+        for (x1, y1) in positions[i]:
+            for (x2, y2) in positions[i + 1]:
+                line_parts.append(
+                    f'<line x1="{x1}" y1="{y1:.1f}" x2="{x2}" y2="{y2:.1f}" '
+                    f'stroke-width="1.6" stroke-linecap="round" opacity="0.85">'
+                    f'<animate attributeName="stroke" '
+                    f'values="{rainbow_values}" dur="3.5s" '
+                    f'begin="{layer_delay:.2f}s" repeatCount="indefinite"/>'
+                    f"</line>"
+                )
+
+    gradient_defs = []
+    for idx, (color, glow) in enumerate(zip(layer_colors, layer_glow)):
+        gradient_defs.append(
+            f'<radialGradient id="g{idx}" cx="35%" cy="35%" r="65%">'
+            f'<stop offset="0%" stop-color="{glow}"/>'
+            f'<stop offset="100%" stop-color="{color}"/>'
+            f"</radialGradient>"
+        )
+
+    circle_parts: list[str] = []
+    for layer_idx, layer in enumerate(positions):
+        for node_idx, (x, y) in enumerate(layer):
+            delay = layer_idx * 0.15 + node_idx * 0.06
+            circle_parts.append(
+                f'<circle cx="{x}" cy="{y:.1f}" r="13" '
+                f'fill="url(#g{layer_idx})" filter="url(#nodeGlow)">'
+                f'<animate attributeName="r" values="11;16;11" dur="1.5s" '
+                f'begin="{delay:.2f}s" repeatCount="indefinite" '
+                f'calcMode="spline" keyTimes="0;0.5;1" '
+                f'keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>'
+                f'<animate attributeName="opacity" values="0.75;1;0.75" dur="1.5s" '
+                f'begin="{delay:.2f}s" repeatCount="indefinite"/>'
+                f"</circle>"
+            )
+
+    svg = (
+        f'<svg viewBox="0 0 720 {canvas_height}" xmlns="http://www.w3.org/2000/svg" '
+        'style="width: 100%; max-width: none; height: auto; display: block;">'
+        '<defs>'
+        + "".join(gradient_defs)
+        + '<filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">'
+        '<feGaussianBlur stdDeviation="5" result="b"/>'
+        '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>'
+        '</filter>'
+        '</defs>'
+        '<g>'
+        + "".join(line_parts)
+        + "</g>"
+        + "".join(circle_parts)
+        + "</svg>"
+    )
+
+    return rx.center(
+        rx.vstack(
+            rx.box(rx.html(svg), width="55vw", max_width="750px"),
+            rx.hstack(
+                rx.spinner(size="3"),
+                rx.text(
+                    "Running inference...",
+                    size="5",
+                    weight="bold",
+                    color="white",
+                    style={"text-shadow": "0 2px 8px rgba(0, 0, 0, 0.7)"},
+                ),
+                spacing="3",
+                align_items="center",
+            ),
+            rx.text(
+                "Forward pass through the network",
+                size="2",
+                color="rgba(255, 255, 255, 0.7)",
+                italic=True,
+                style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
+            ),
+            spacing="5",
+            align_items="center",
+            width="100%",
+            padding_y="6",
+        ),
+        width="100%",
+    )
+
+
+def carousel_card() -> rx.Component:
+    card = rx.box(
+        rx.hstack(
+            # LEFT: bird photo at native 224x224 resolution, centered in a
+            # flex wrapper that stretches to the full card height. The wrapper
+            # takes as much of the left side of the card as we can spare while
+            # still leaving room for the prediction details on the right.
+            rx.box(
+                rx.image(
+                    src=State.current_card_image,
+                    width="224px",
+                    height="224px",
+                    object_fit="cover",
+                    border="4px solid rgba(167, 139, 250, 0.75)",
+                    border_radius="14px",
+                    flex_shrink="0",
+                ),
+                width="260px",
+                flex_shrink="0",
+                style={
+                    "align-self": "stretch",
+                    "display": "flex",
+                    "align-items": "center",
+                    "justify-content": "center",
+                },
+            ),
+            # RIGHT: prediction details
+            rx.vstack(
+                rx.badge(
+                    State.current_rank,
+                    color_scheme="iris",
+                    variant="soft",
+                    size="3",
+                    radius="full",
+                ),
+                rx.heading(
+                    State.current_card_name,
+                    size="6",
+                    weight="bold",
+                    color="white",
+                ),
+                rx.vstack(
+                    rx.hstack(
+                        rx.text(
+                            "Confidence",
+                            size="2",
+                            color="rgba(255, 255, 255, 0.65)",
+                        ),
+                        rx.text(
+                            State.current_card_confidence_pct,
+                            size="2",
+                            weight="bold",
+                            color="#a78bfa",
+                        ),
+                        width="100%",
+                        justify="between",
+                    ),
+                    rx.progress(
+                        value=State.current_card_confidence_bar,
+                        color_scheme="iris",
+                        size="2",
+                        width="100%",
+                    ),
+                    spacing="1",
+                    width="100%",
+                ),
+                rx.text(
+                    State.current_card_description,
+                    size="2",
+                    color="rgba(255, 255, 255, 0.80)",
+                    line_height="1.7",
+                ),
+                spacing="4",
+                flex="1",
+                align_items="start",
+                # Explicit pixel padding via style dict so Radix scale tokens
+                # don't get overridden by the underlying Flex component's CSS.
+                style={
+                    "padding-top": "36px",
+                    "padding-bottom": "36px",
+                    "padding-left": "48px",
+                    "padding-right": "40px",
+                },
+            ),
+            spacing="0",
+            align_items="stretch",
+            width="100%",
+            height="100%",
+        ),
+        overflow="hidden",
+        border_radius="16px",
+        width="680px",
+        min_height="340px",
+        border="1px solid rgba(167, 139, 250, 0.35)",
+        background="rgba(15, 13, 24, 0.42)",
+        style={
+            "backdrop-filter": "blur(14px)",
+            "transition": "transform 0.25s ease, border-color 0.25s ease",
+            "box-shadow": "0 25px 60px -20px rgba(99, 102, 241, 0.5)",
+        },
+        _hover={
+            "transform": "translateY(-3px)",
+            "border-color": "rgba(167, 139, 250, 0.7)",
+        },
+    )
+
+    return rx.vstack(
+        rx.hstack(
+            rx.button(
+                rx.icon("chevron-left", size=28),
+                on_click=State.prev_card,
+                disabled=State.is_first_card,
+                variant="soft",
+                size="4",
+                color_scheme="gray",
+                style={"cursor": "pointer", "border-radius": "9999px"},
+            ),
+            card,
+            rx.button(
+                rx.icon("chevron-right", size=28),
+                on_click=State.next_card,
+                disabled=State.is_last_card,
+                variant="soft",
+                size="4",
+                color_scheme="gray",
+                style={"cursor": "pointer", "border-radius": "9999px"},
+            ),
+            align_items="center",
+            spacing="5",
+            justify="center",
+            width="100%",
+        ),
+        rx.hstack(
+            rx.foreach(
+                [0, 1, 2, 3, 4],
+                lambda i: rx.box(
+                    width="32px",
+                    height="5px",
+                    border_radius="full",
+                    background=rx.cond(
+                        State.current_card == i,
+                        "#a78bfa",
+                        "rgba(255, 255, 255, 0.25)",
+                    ),
+                    transition="background 0.2s ease",
+                ),
+            ),
+            spacing="2",
+            justify="center",
+        ),
+        rx.text(
+            State.position_label,
+            size="2",
+            color="rgba(255, 255, 255, 0.7)",
+            style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
+        ),
+        rx.button(
+            rx.hstack(
+                rx.icon("x", size=18),
+                rx.text("Exit", weight="medium"),
+                spacing="2",
+            ),
+            on_click=State.exit_to_landing,
+            variant="outline",
+            size="3",
+            color_scheme="gray",
+            margin_top="4",
+            style={"cursor": "pointer", "color": "white"},
+        ),
+        spacing="5",
+        align_items="center",
+        width="100%",
+    )
+
+
+def landing_view() -> rx.Component:
+    return rx.vstack(
+        image_preview(),
+        upload_zone(),
+        run_inference_button(),
+        rx.cond(
+            State.has_error,
+            rx.callout(
+                State.inference_error,
+                icon="triangle_alert",
+                color_scheme="red",
+                size="2",
+                width="100%",
+                max_width="420px",
+            ),
+            rx.fragment(),
+        ),
+        spacing="5",
+        align_items="center",
+        width="100%",
+    )

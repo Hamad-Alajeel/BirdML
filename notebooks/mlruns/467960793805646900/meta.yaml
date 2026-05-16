@@ -1,0 +1,8 @@
+artifact_location: file:///home/sagemaker-user/mlruns/467960793805646900
+creation_time: 1778711072632
+experiment_id: '467960793805646900'
+last_update_time: 1778711072632
+lifecycle_stage: active
+name: bird_training
+trace_location: null
+workspace: default

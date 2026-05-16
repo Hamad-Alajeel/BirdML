@@ -29,7 +29,10 @@ IMAGE_URI = f"{AWS_ACCOUNT_ID}.dkr.ecr.{AWS_REGION}.amazonaws.com/bird-ml-traini
 PIPELINE_NAME = "bird-ml-training"
 
 
-def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
+def build_pipeline(
+    session: PipelineSession | None = None,
+    gpu_instance_type: str = "ml.g5.xlarge",
+) -> Pipeline:
     if session is None:
         session = PipelineSession()
 
@@ -54,10 +57,13 @@ def build_pipeline(session: PipelineSession | None = None) -> Pipeline:
         sagemaker_session=session,
     )
 
+    # gpu_instance_type is decided at upsert time. When the pipeline is upserted
+    # with --smoke-test true, this becomes a CPU instance so the pipeline can run
+    # end-to-end without GPU quota. Real runs upsert with the default ml.g5.xlarge.
     gpu_processor = ScriptProcessor(
         image_uri=IMAGE_URI,
         command=["python"],
-        instance_type="ml.g5.xlarge",
+        instance_type=gpu_instance_type,
         instance_count=1,
         role=ROLE_ARN,
         sagemaker_session=session,
@@ -162,7 +168,14 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
 
-    pipeline = build_pipeline()
+    # When smoke-testing, the pipeline runs on CPU because new AWS accounts
+    # typically have zero GPU quota. Real runs use the default GPU instance.
+    smoke_mode = args.smoke_test.lower() == "true"
+    gpu_instance_type = "ml.m5.xlarge" if smoke_mode else "ml.g5.xlarge"
+    logger.info("Building pipeline with gpu_instance_type=%s (smoke_mode=%s)",
+                gpu_instance_type, smoke_mode)
+
+    pipeline = build_pipeline(gpu_instance_type=gpu_instance_type)
     pipeline.upsert(role_arn=ROLE_ARN)
     logger.info("Pipeline '%s' upserted.", PIPELINE_NAME)
 

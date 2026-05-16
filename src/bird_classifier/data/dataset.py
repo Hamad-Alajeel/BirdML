@@ -27,9 +27,17 @@ def build_label_mapping(dataset) -> dict[int, int]:
     }
 
 def build_idx_to_name(dataset) -> dict[int, str]:
-    """Build a mapping from dense label index to species name using the dataset's ClassLabel feature."""
+    """Build mapping from DENSE label index to species name.
+
+    Mirrors the compaction done by build_label_mapping so class_names.json[i]
+    is the species the trained model actually predicts at dense output i.
+    """
     class_label = dataset["train"].features["label"]
-    return {i: class_label.int2str(i) for i in range(class_label.num_classes)}
+    label_to_idx = build_label_mapping(dataset)
+    return {
+        dense_idx: class_label.int2str(original_label)
+        for original_label, dense_idx in label_to_idx.items()
+    }
 
 
 def save_idx_to_name(idx_to_name: dict[int, str], path: Path) -> None:

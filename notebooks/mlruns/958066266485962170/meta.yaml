@@ -1,0 +1,8 @@
+artifact_location: file:///opt/ml/code/mlruns/958066266485962170
+creation_time: 1777629392822
+experiment_id: '958066266485962170'
+last_update_time: 1777629392822
+lifecycle_stage: active
+name: bird_finetuning
+trace_location: null
+workspace: default

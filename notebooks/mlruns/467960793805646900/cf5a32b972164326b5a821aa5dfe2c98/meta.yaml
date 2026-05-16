@@ -1,0 +1,14 @@
+artifact_uri: file:///home/sagemaker-user/mlruns/467960793805646900/cf5a32b972164326b5a821aa5dfe2c98/artifacts
+end_time: 1778711233498
+entry_point_name: ''
+experiment_id: '467960793805646900'
+lifecycle_stage: active
+run_id: cf5a32b972164326b5a821aa5dfe2c98
+run_name: final_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778711072724
+status: 4
+tags: []
+user_id: sagemaker-user
