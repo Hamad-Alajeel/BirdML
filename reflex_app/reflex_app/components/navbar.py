@@ -111,9 +111,13 @@ def navbar() -> rx.Component:
             style={"backdrop-filter": GLASS_BLUR},
         ),
         width="100%",
-        # Match the page content max_width so the navbar pill area lines
-        # up visually with the title and cards below it.
-        max_width=rx.breakpoints(initial="86vw", md="100%"),
+        # Match the page content max_width and explicitly center via auto
+        # margins so we don't rely on the parent flex's align prop. Using
+        # `%` instead of `vw` because vw can include reserved scrollbar
+        # space in some mobile browsers (notably Instagram's webview),
+        # which causes vw-centered content to appear off-center.
+        max_width=rx.breakpoints(initial="86%", md="100%"),
+        margin_x="auto",
         padding_top="5",
         padding_bottom="2",
         padding_x=rx.breakpoints(initial="4", md="2"),
