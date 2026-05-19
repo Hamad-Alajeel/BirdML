@@ -82,7 +82,7 @@ def _mlops_section() -> rx.Component:
 def _about_me_section() -> rx.Component:
     return rx.vstack(
         _section_heading("About Me"),
-        rx.hstack(
+        rx.flex(
             rx.vstack(
                 _section_text(
                     "Hi, I'm Hamad Alajeel. I have a bachelor's and master's degree in Electrical Engineering "
@@ -101,17 +101,19 @@ def _about_me_section() -> rx.Component:
                 ),
                 spacing="3",
                 flex="1",
+                width="100%",
             ),
             rx.image(
                 src=_AUTHOR_IMAGE,
                 alt="Hamad with birds",
-                width="200px",
+                width=["160px", "180px", "200px"],
                 height="auto",
                 border_radius="12px",
                 box_shadow="0 8px 24px rgba(99, 102, 241, 0.3)",
             ),
+            direction=["column", "column", "row"],
             spacing="6",
-            align_items="flex-start",
+            align_items=["center", "center", "flex-start"],
             width="100%",
         ),
         spacing="3",
