@@ -505,6 +505,78 @@ def carousel_card() -> rx.Component:
     )
 
 
+def low_confidence_view() -> rx.Component:
+    """Gate shown when every top-5 prediction is below 50% confidence.
+    Lets the user either bail (re-upload a better photo) or proceed anyway
+    to see the model's best guesses."""
+    return rx.center(
+        rx.vstack(
+            rx.image(
+                src="/budgie_thinking.gif",
+                width=rx.breakpoints(initial="240px", md="320px"),
+                height="auto",
+                border_radius="14px",
+                box_shadow="0 20px 50px -15px rgba(0, 0, 0, 0.7)",
+            ),
+            rx.heading(
+                "Hmm, the model isn't sure",
+                size=rx.breakpoints(initial="5", md="6"),
+                color="white",
+                weight="bold",
+                text_align="center",
+                style={"text-shadow": "0 2px 8px rgba(0, 0, 0, 0.7)"},
+            ),
+            rx.text(
+                "The confidence levels are too low for the image uploaded. "
+                "Make sure to upload an image of a bird centered in the middle. "
+                "Do you want to proceed with the model's predictions?",
+                size="3",
+                color="rgba(255, 255, 255, 0.85)",
+                text_align="center",
+                line_height="1.6",
+                max_width="520px",
+                style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.6)"},
+            ),
+            rx.hstack(
+                rx.button(
+                    rx.hstack(
+                        rx.icon("arrow-left", size=18),
+                        rx.text("Back", weight="medium"),
+                        spacing="2",
+                    ),
+                    on_click=State.exit_to_landing,
+                    variant="outline",
+                    size="3",
+                    color_scheme="gray",
+                    style={"cursor": "pointer", "color": "white"},
+                ),
+                rx.button(
+                    rx.hstack(
+                        rx.text("Proceed", weight="bold"),
+                        rx.icon("arrow-right", size=18),
+                        spacing="2",
+                    ),
+                    on_click=State.proceed_to_results,
+                    size="3",
+                    color_scheme="iris",
+                    style={
+                        "cursor": "pointer",
+                        "box-shadow": "0 14px 30px -10px rgba(99, 102, 241, 0.7)",
+                    },
+                ),
+                spacing="4",
+                justify="center",
+                wrap="wrap",
+            ),
+            spacing="5",
+            align_items="center",
+            width="100%",
+            padding_y="4",
+        ),
+        width="100%",
+    )
+
+
 def landing_view() -> rx.Component:
     return rx.vstack(
         image_preview(),

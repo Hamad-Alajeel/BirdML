@@ -11,6 +11,7 @@ from ..components.home_widgets import (
     carousel_card,
     gradient_heading,
     landing_view,
+    low_confidence_view,
     nn_animation,
 )
 from ..components.layout import page_layout
@@ -27,7 +28,11 @@ def home() -> rx.Component:
                 rx.cond(
                     State.is_processing,
                     nn_animation(),
-                    carousel_card(),
+                    rx.cond(
+                        State.is_low_confidence,
+                        low_confidence_view(),
+                        carousel_card(),
+                    ),
                 ),
             ),
             spacing="7",

@@ -53,11 +53,19 @@ for _name in _ALL_SPECIES:
 
 _ALPHABET_LETTERS: list[str] = sorted(_SPECIES_BY_LETTER.keys())
 
+# If the model's best guess is still below this, show the low-confidence
+# warning before the predictions instead of jumping straight to results.
+LOW_CONFIDENCE_THRESHOLD = 0.50
+
 
 class State(rx.State):
     """Tracks app phase, the uploaded image, and carousel navigation."""
 
-    phase: str = "landing"  # "landing" | "processing" | "results"
+    # phase: "landing" → "processing" → ("low_confidence" → )? "results"
+    # low_confidence is an optional gate shown when every top-5 prediction
+    # is below LOW_CONFIDENCE_THRESHOLD, giving the user a chance to bail
+    # before seeing predictions the model itself isn't sure about.
+    phase: str = "landing"
     img_data_uri: str = ""
 
     current_card: int = 0
@@ -151,6 +159,10 @@ class State(rx.State):
     @rx.var
     def is_results(self) -> bool:
         return self.phase == "results"
+
+    @rx.var
+    def is_low_confidence(self) -> bool:
+        return self.phase == "low_confidence"
 
     @rx.var
     def has_error(self) -> bool:
@@ -263,6 +275,16 @@ class State(rx.State):
             _DESCRIPTIONS.get(p["name"], "") for p in predictions
         ]
         self.current_card = 0
+        # Gate the results view behind a low-confidence warning if even the
+        # top pick is below the threshold — the model is uncertain enough
+        # that the user probably uploaded a non-bird or a bad photo.
+        if self.card_confidences and max(self.card_confidences) < LOW_CONFIDENCE_THRESHOLD:
+            self.phase = "low_confidence"
+        else:
+            self.phase = "results"
+
+    def proceed_to_results(self):
+        """User chose to see the low-confidence predictions anyway."""
         self.phase = "results"
 
     def prev_card(self):
