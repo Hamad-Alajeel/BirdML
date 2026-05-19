@@ -266,10 +266,14 @@ def species_card_view() -> rx.Component:
                 flex="1",
                 align_items="start",
                 padding=rx.breakpoints(initial="20px", md="36px 40px 36px 48px"),
-                # Scroll the description column if it overflows the fixed
-                # card height, so the image stays vertically centered in
-                # the same place across all species.
-                style={"overflow-y": "auto"},
+                # Vertically center the heading + description so they line up
+                # with the centered image on desktop (no-op on mobile since
+                # the vstack is content-height in column layout). Also scroll
+                # if a description ever overflows the fixed card height.
+                style={
+                    "overflow-y": "auto",
+                    "justify-content": "center",
+                },
             ),
             direction=rx.breakpoints(initial="column", md="row"),
             spacing="0",

@@ -51,8 +51,8 @@ def catalogue() -> rx.Component:
             spacing="7",
             align_items="center",
             width="100%",
-            max_width="780px",
-            padding_x=rx.breakpoints(initial="7", md="4"),
+            max_width=rx.breakpoints(initial="86vw", md="780px"),
+            padding_x=rx.breakpoints(initial="5", md="4"),
             padding_y="10",
         )
     )

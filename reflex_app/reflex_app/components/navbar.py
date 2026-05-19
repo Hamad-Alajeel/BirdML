@@ -111,7 +111,8 @@ def navbar() -> rx.Component:
             style={"backdrop-filter": GLASS_BLUR},
         ),
         width="100%",
+        max_width=rx.breakpoints(initial="92vw", md="100%"),
         padding_top="5",
         padding_bottom="2",
-        padding_x=rx.breakpoints(initial="6", md="2"),
+        padding_x=rx.breakpoints(initial="4", md="2"),
     )
