@@ -114,51 +114,73 @@ def image_preview() -> rx.Component:
 
 def upload_zone() -> rx.Component:
     return rx.center(
-        rx.upload(
-            rx.vstack(
-                rx.icon("upload", size=28, color="#f0abfc"),
-                rx.text(
-                    "Drop a bird photo here",
-                    weight="medium",
-                    size="3",
-                    color="white",
-                    text_align="center",
-                    style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.6)"},
+        rx.cond(
+            State.has_image,
+            # When an image is loaded, replace the dropzone with a red
+            # "Delete Upload" button so the user can clear and start over.
+            rx.button(
+                rx.hstack(
+                    rx.icon("trash-2", size=20),
+                    rx.text("Delete Upload", weight="bold"),
+                    spacing="2",
+                    align_items="center",
                 ),
-                rx.text(
-                    "or click to browse",
-                    size="2",
-                    color="rgba(255, 255, 255, 0.7)",
-                    text_align="center",
-                ),
-                align_items="center",
-                justify="center",
-                spacing="2",
+                on_click=State.clear_image,
+                size="4",
+                color_scheme="red",
                 width="100%",
+                max_width="420px",
+                style={
+                    "cursor": "pointer",
+                    "box-shadow": "0 14px 30px -10px rgba(239, 68, 68, 0.6)",
+                },
             ),
-            id="bird_uploader",
-            accept={"image/*": [".png", ".jpg", ".jpeg", ".webp"]},
-            max_files=1,
-            on_drop=State.handle_upload(rx.upload_files(upload_id="bird_uploader")),
-            border="2px dashed rgba(240, 171, 252, 0.5)",
-            border_radius="16px",
-            padding="5",
-            width="100%",
-            max_width="420px",
-            background="rgba(0, 0, 0, 0.18)",
-            backdrop_filter="blur(6px)",
-            _hover={
-                "border_color": "#f0abfc",
-                "background": "rgba(240, 171, 252, 0.1)",
-            },
-            transition="all 0.25s ease",
-            # Force the underlying dropzone div to flex-center its child vstack.
-            style={
-                "display": "flex",
-                "align-items": "center",
-                "justify-content": "center",
-                "text-align": "center",
-            },
+            rx.upload(
+                rx.vstack(
+                    rx.icon("upload", size=28, color="#f0abfc"),
+                    rx.text(
+                        "Drop a bird photo here",
+                        weight="medium",
+                        size="3",
+                        color="white",
+                        text_align="center",
+                        style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.6)"},
+                    ),
+                    rx.text(
+                        "or click to browse",
+                        size="2",
+                        color="rgba(255, 255, 255, 0.7)",
+                        text_align="center",
+                    ),
+                    align_items="center",
+                    justify="center",
+                    spacing="2",
+                    width="100%",
+                ),
+                id="bird_uploader",
+                accept={"image/*": [".png", ".jpg", ".jpeg", ".webp"]},
+                max_files=1,
+                on_drop=State.handle_upload(rx.upload_files(upload_id="bird_uploader")),
+                border="2px dashed rgba(240, 171, 252, 0.5)",
+                border_radius="16px",
+                padding="5",
+                width="100%",
+                max_width="420px",
+                background="rgba(0, 0, 0, 0.18)",
+                backdrop_filter="blur(6px)",
+                _hover={
+                    "border_color": "#f0abfc",
+                    "background": "rgba(240, 171, 252, 0.1)",
+                },
+                transition="all 0.25s ease",
+                # Force the underlying dropzone div to flex-center its child vstack.
+                style={
+                    "display": "flex",
+                    "align-items": "center",
+                    "justify-content": "center",
+                    "text-align": "center",
+                },
+            ),
         ),
         width="100%",
     )
@@ -384,6 +406,10 @@ def carousel_card() -> rx.Component:
                 align_items="start",
                 # Tighter padding on mobile, original spacing on desktop.
                 padding=rx.breakpoints(initial="20px", md="36px 40px 36px 48px"),
+                # Scroll inside the column if a description is too long for
+                # the fixed-height card, so the image stays in a consistent
+                # vertical position from card to card.
+                style={"overflow-y": "auto"},
             ),
             direction=rx.breakpoints(initial="column", md="row"),
             spacing="0",
@@ -395,7 +421,7 @@ def carousel_card() -> rx.Component:
         border_radius="16px",
         width=rx.breakpoints(initial="100%", md="680px"),
         max_width="680px",
-        min_height=rx.breakpoints(initial="auto", md="340px"),
+        height=rx.breakpoints(initial="auto", md="380px"),
         border="1px solid rgba(167, 139, 250, 0.35)",
         background="rgba(15, 13, 24, 0.42)",
         style={

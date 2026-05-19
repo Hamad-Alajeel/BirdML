@@ -266,6 +266,10 @@ def species_card_view() -> rx.Component:
                 flex="1",
                 align_items="start",
                 padding=rx.breakpoints(initial="20px", md="36px 40px 36px 48px"),
+                # Scroll the description column if it overflows the fixed
+                # card height, so the image stays vertically centered in
+                # the same place across all species.
+                style={"overflow-y": "auto"},
             ),
             direction=rx.breakpoints(initial="column", md="row"),
             spacing="0",
@@ -277,7 +281,7 @@ def species_card_view() -> rx.Component:
         border_radius="16px",
         width=rx.breakpoints(initial="100%", md="680px"),
         max_width="680px",
-        min_height=rx.breakpoints(initial="auto", md="340px"),
+        height=rx.breakpoints(initial="auto", md="380px"),
         border=GLASS_BORDER,
         background=GLASS_BG,
         style={

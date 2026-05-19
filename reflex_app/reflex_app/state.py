@@ -213,6 +213,11 @@ class State(rx.State):
         encoded = base64.b64encode(upload_data).decode("ascii")
         self.img_data_uri = f"data:{mime};base64,{encoded}"
 
+    def clear_image(self):
+        """Drop the currently-uploaded image so the user can start over."""
+        self.img_data_uri = ""
+        self.inference_error = ""
+
     async def run_inference(self):
         if not self.has_image:
             return
