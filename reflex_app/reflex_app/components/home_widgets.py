@@ -413,7 +413,9 @@ def carousel_card() -> rx.Component:
             ),
             direction=rx.breakpoints(initial="column", md="row"),
             spacing="0",
-            align_items=rx.breakpoints(initial="center", md="stretch"),
+            # Radix prop name rather than CSS pass-through so the
+            # class-based default doesn't override.
+            align=rx.breakpoints(initial="center", md="stretch"),
             width="100%",
             height="100%",
         ),
@@ -461,7 +463,7 @@ def carousel_card() -> rx.Component:
             spacing=rx.breakpoints(initial="3", md="5"),
             justify="center",
             width="100%",
-        ),
+        ),  # already uses Radix `align` prop, good
         rx.hstack(
             rx.foreach(
                 [0, 1, 2, 3, 4],

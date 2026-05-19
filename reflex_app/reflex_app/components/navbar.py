@@ -111,7 +111,9 @@ def navbar() -> rx.Component:
             style={"backdrop-filter": GLASS_BLUR},
         ),
         width="100%",
-        max_width=rx.breakpoints(initial="92vw", md="100%"),
+        # Match the page content max_width so the navbar pill area lines
+        # up visually with the title and cards below it.
+        max_width=rx.breakpoints(initial="86vw", md="100%"),
         padding_top="5",
         padding_bottom="2",
         padding_x=rx.breakpoints(initial="4", md="2"),

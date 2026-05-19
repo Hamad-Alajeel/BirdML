@@ -80,8 +80,11 @@ def page_layout(content: rx.Component) -> rx.Component:
             width="100%",
             # Radix's default cross-axis alignment is "stretch" which pins
             # children with a max-width (like the navbar pill) to the left
-            # edge instead of centering them. Force center alignment.
-            align_items="center",
+            # edge instead of centering them. Use Radix's own `align` prop
+            # rather than the CSS-pass-through `align_items` — Radix's
+            # class-based defaults have higher specificity than inline
+            # styles, so `align_items` gets silently overridden.
+            align="center",
             background=(
                 "linear-gradient(180deg, "
                 "rgba(8, 6, 16, 0.55) 0%, "

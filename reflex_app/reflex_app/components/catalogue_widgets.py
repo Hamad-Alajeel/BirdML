@@ -277,7 +277,9 @@ def species_card_view() -> rx.Component:
             ),
             direction=rx.breakpoints(initial="column", md="row"),
             spacing="0",
-            align_items=rx.breakpoints(initial="center", md="stretch"),
+            # Radix prop name (`align`) rather than CSS pass-through
+            # (`align_items`) so the class-based default doesn't override.
+            align=rx.breakpoints(initial="center", md="stretch"),
             width="100%",
             height="100%",
         ),
