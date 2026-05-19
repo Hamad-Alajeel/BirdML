@@ -25,6 +25,6 @@ RUN reflex init --template blank --loglevel info || true
 EXPOSE 3000 8001
 
 CMD ["reflex", "run", \
-     "--env", "prod", \
+     "--env", "dev", \
      "--frontend-port", "3000", \
      "--backend-port", "8001"]
