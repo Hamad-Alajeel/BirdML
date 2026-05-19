@@ -1,0 +1,17 @@
+:3000
+
+# Reflex Python backend (WebSocket events, file uploads, health check)
+handle /_event/* {
+    reverse_proxy localhost:8001
+}
+handle /_upload/* {
+    reverse_proxy localhost:8001
+}
+handle /ping {
+    reverse_proxy localhost:8001
+}
+
+# Everything else: Reflex Next.js frontend
+handle {
+    reverse_proxy localhost:3001
+}

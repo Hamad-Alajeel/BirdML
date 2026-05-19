@@ -2,10 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Reflex bootstraps Bun on first run to compile the Next.js frontend, so
-# we need curl + unzip available even after the build step.
+# System deps for Bun (Reflex toolchain) + Caddy (in-container reverse proxy).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl unzip ca-certificates \
+    && curl -L https://github.com/caddyserver/caddy/releases/download/v2.7.6/caddy_2.7.6_linux_amd64.tar.gz \
+        | tar xz -C /usr/local/bin caddy \
+    && chmod +x /usr/local/bin/caddy \
     && rm -rf /var/lib/apt/lists/*
 
 COPY reflex_app/requirements.txt requirements.txt
@@ -20,11 +22,13 @@ COPY reflex_app/ /app/
 # spends 2-5 minutes setting up node_modules.
 RUN reflex init --template blank --loglevel info || true
 
-# Frontend (Next.js) → 3000. Backend (state + websocket) → 8001.
-# FastAPI is reached separately via BIRD_API_URL (set at run time).
-EXPOSE 3000 8001
+# Caddy listens on the single public port (3000) and routes:
+#   /_event/*, /_upload/*, /ping  -> Reflex backend on internal :8001
+#   everything else               -> Reflex frontend on internal :3001
+COPY reflex_app/Caddyfile /etc/caddy/Caddyfile
+COPY reflex_app/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD ["reflex", "run", \
-     "--env", "dev", \
-     "--frontend-port", "3000", \
-     "--backend-port", "8001"]
+EXPOSE 3000
+
+CMD ["/entrypoint.sh"]
