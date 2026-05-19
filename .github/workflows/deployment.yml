@@ -38,7 +38,7 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          docker build -f reflex_app/Dockerfile -t $ECR_FRONTEND:latest reflex_app/
+          docker build -f reflex_app/Dockerfile -t $ECR_FRONTEND:latest .
           docker push $ECR_FRONTEND:latest
 
       - name: Update API ECS service
