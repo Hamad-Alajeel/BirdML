@@ -78,6 +78,10 @@ def page_layout(content: rx.Component) -> rx.Component:
             spacing="0",
             min_height="100vh",
             width="100%",
+            # Radix's default cross-axis alignment is "stretch" which pins
+            # children with a max-width (like the navbar pill) to the left
+            # edge instead of centering them. Force center alignment.
+            align_items="center",
             background=(
                 "linear-gradient(180deg, "
                 "rgba(8, 6, 16, 0.55) 0%, "
