@@ -228,19 +228,20 @@ def species_card_view() -> rx.Component:
     the rank badge / confidence bar / navigation chevrons, since this card
     isn't a prediction — it's a static encyclopedia entry."""
     card = rx.box(
-        rx.hstack(
+        rx.flex(
             rx.box(
                 rx.image(
                     src=State.selected_species_image,
-                    width="224px",
-                    height="224px",
+                    width=["180px", "200px", "224px"],
+                    height=["180px", "200px", "224px"],
                     object_fit="cover",
                     border="4px solid rgba(167, 139, 250, 0.75)",
                     border_radius="14px",
                     flex_shrink="0",
                 ),
-                width="260px",
+                width=["100%", "100%", "260px"],
                 flex_shrink="0",
+                padding=["20px 0 0 0", "20px 0 0 0", "0"],
                 style={
                     "align-self": "stretch",
                     "display": "flex",
@@ -251,7 +252,7 @@ def species_card_view() -> rx.Component:
             rx.vstack(
                 rx.heading(
                     State.selected_species,
-                    size="6",
+                    size=["5", "5", "6"],
                     weight="bold",
                     color="white",
                 ),
@@ -264,22 +265,19 @@ def species_card_view() -> rx.Component:
                 spacing="4",
                 flex="1",
                 align_items="start",
-                style={
-                    "padding-top": "36px",
-                    "padding-bottom": "36px",
-                    "padding-left": "48px",
-                    "padding-right": "40px",
-                },
+                padding=["20px", "20px", "36px 40px 36px 48px"],
             ),
+            direction=["column", "column", "row"],
             spacing="0",
-            align_items="stretch",
+            align_items=["center", "center", "stretch"],
             width="100%",
             height="100%",
         ),
         overflow="hidden",
         border_radius="16px",
-        width="680px",
-        min_height="340px",
+        width=["100%", "100%", "680px"],
+        max_width="680px",
+        min_height=["auto", "auto", "340px"],
         border=GLASS_BORDER,
         background=GLASS_BG,
         style={
