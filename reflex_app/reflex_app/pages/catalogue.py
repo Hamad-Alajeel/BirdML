@@ -53,6 +53,7 @@ def catalogue() -> rx.Component:
             width="100%",
             max_width=rx.breakpoints(initial="86vw", md="780px"),
             padding_x=rx.breakpoints(initial="5", md="4"),
-            padding_y="10",
+            padding_top="10",
+            padding_bottom=rx.breakpoints(initial="120px", md="80px"),
         )
     )
