@@ -38,22 +38,28 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          docker build -f frontend/Dockerfile -t $ECR_FRONTEND:latest .
+          docker build -f reflex_app/Dockerfile -t $ECR_FRONTEND:latest reflex_app/
           docker push $ECR_FRONTEND:latest
 
-      # ECS update steps go here once ECS cluster and services are set up
-      # - name: Update API ECS service
-      #   run: |
-      #     aws ecs update-service \
-      #       --cluster bird-ml-cluster \
-      #       --service bird-ml-api \
-      #       --force-new-deployment \
-      #       --region ${{ env.AWS_REGION }}
+      - name: Update API ECS service
+        run: |
+          aws ecs update-service \
+            --cluster bird-ml-cluster \
+            --service bird-ml-api \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
 
-      # - name: Update frontend ECS service
-      #   run: |
-      #     aws ecs update-service \
-      #       --cluster bird-ml-cluster \
-      #       --service bird-ml-frontend \
-      #       --force-new-deployment \
-      #       --region ${{ env.AWS_REGION }}
+      - name: Update frontend ECS service
+        run: |
+          aws ecs update-service \
+            --cluster bird-ml-cluster \
+            --service bird-ml-frontend \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for services to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster bird-ml-cluster \
+            --services bird-ml-api bird-ml-frontend \
+            --region ${{ env.AWS_REGION }}
