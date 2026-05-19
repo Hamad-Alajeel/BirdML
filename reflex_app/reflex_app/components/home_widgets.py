@@ -338,8 +338,8 @@ def carousel_card() -> rx.Component:
             rx.box(
                 rx.image(
                     src=State.current_card_image,
-                    width=rx.breakpoints(initial="180px", sm="200px", md="224px"),
-                    height=rx.breakpoints(initial="180px", sm="200px", md="224px"),
+                    width=rx.breakpoints(initial="140px", sm="180px", md="224px"),
+                    height=rx.breakpoints(initial="140px", sm="180px", md="224px"),
                     object_fit="cover",
                     border="4px solid rgba(167, 139, 250, 0.75)",
                     border_radius="14px",
@@ -347,7 +347,7 @@ def carousel_card() -> rx.Component:
                 ),
                 width=rx.breakpoints(initial="100%", md="260px"),
                 flex_shrink="0",
-                padding=rx.breakpoints(initial="20px 0 0 0", md="0"),
+                padding=rx.breakpoints(initial="14px 0 0 0", md="0"),
                 style={
                     "align-self": "stretch",
                     "display": "flex",
@@ -401,11 +401,11 @@ def carousel_card() -> rx.Component:
                     color="rgba(255, 255, 255, 0.80)",
                     line_height="1.7",
                 ),
-                spacing="4",
+                spacing=rx.breakpoints(initial="3", md="4"),
                 flex="1",
                 align_items="start",
                 # Tighter padding on mobile, original spacing on desktop.
-                padding=rx.breakpoints(initial="20px", md="36px 40px 36px 48px"),
+                padding=rx.breakpoints(initial="14px", md="36px 40px 36px 48px"),
                 # Scroll inside the column if a description is too long for
                 # the fixed-height card, so the image stays in a consistent
                 # vertical position from card to card.

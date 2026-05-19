@@ -232,8 +232,8 @@ def species_card_view() -> rx.Component:
             rx.box(
                 rx.image(
                     src=State.selected_species_image,
-                    width=rx.breakpoints(initial="180px", sm="200px", md="224px"),
-                    height=rx.breakpoints(initial="180px", sm="200px", md="224px"),
+                    width=rx.breakpoints(initial="140px", sm="180px", md="224px"),
+                    height=rx.breakpoints(initial="140px", sm="180px", md="224px"),
                     object_fit="cover",
                     border="4px solid rgba(167, 139, 250, 0.75)",
                     border_radius="14px",
@@ -241,7 +241,7 @@ def species_card_view() -> rx.Component:
                 ),
                 width=rx.breakpoints(initial="100%", md="260px"),
                 flex_shrink="0",
-                padding=rx.breakpoints(initial="20px 0 0 0", md="0"),
+                padding=rx.breakpoints(initial="14px 0 0 0", md="0"),
                 style={
                     "align-self": "stretch",
                     "display": "flex",
@@ -262,10 +262,10 @@ def species_card_view() -> rx.Component:
                     color="rgba(255, 255, 255, 0.80)",
                     line_height="1.7",
                 ),
-                spacing="4",
+                spacing=rx.breakpoints(initial="3", md="4"),
                 flex="1",
                 align_items="start",
-                padding=rx.breakpoints(initial="20px", md="36px 40px 36px 48px"),
+                padding=rx.breakpoints(initial="14px", md="36px 40px 36px 48px"),
                 # Vertically center the heading + description so they line up
                 # with the centered image on desktop (no-op on mobile since
                 # the vstack is content-height in column layout). Also scroll

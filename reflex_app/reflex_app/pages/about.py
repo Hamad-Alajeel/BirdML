@@ -200,15 +200,15 @@ def about() -> rx.Component:
                 _about_me_section(),
                 _section_divider(),
                 _contact_section(),
-                spacing="6",
+                spacing=rx.breakpoints(initial="4", md="6"),
                 width="100%",
             ),
-            spacing="7",
+            spacing=rx.breakpoints(initial="5", md="7"),
             align_items="center",
             width="100%",
             max_width=rx.breakpoints(initial="86vw", md="800px"),
             padding_x=rx.breakpoints(initial="5", md="4"),
-            padding_top="10",
+            padding_top=rx.breakpoints(initial="6", md="10"),
             padding_bottom=rx.breakpoints(initial="80px", md="56px"),
         )
     )
