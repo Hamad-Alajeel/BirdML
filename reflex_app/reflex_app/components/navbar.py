@@ -113,4 +113,5 @@ def navbar() -> rx.Component:
         width="100%",
         padding_top="5",
         padding_bottom="2",
+        padding_x=rx.breakpoints(initial="4", md="2"),
     )

@@ -34,7 +34,7 @@ def home() -> rx.Component:
             align_items="center",
             width="100%",
             max_width="780px",
-            padding_x="4",
+            padding_x=rx.breakpoints(initial="5", md="4"),
             padding_y="10",
         )
     )

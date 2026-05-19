@@ -207,7 +207,7 @@ def about() -> rx.Component:
             align_items="center",
             width="100%",
             max_width="800px",
-            padding_x="4",
+            padding_x=rx.breakpoints(initial="5", md="4"),
             padding_top="10",
             padding_bottom="24",
         )
