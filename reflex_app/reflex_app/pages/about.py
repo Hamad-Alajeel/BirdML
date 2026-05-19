@@ -209,6 +209,6 @@ def about() -> rx.Component:
             max_width=rx.breakpoints(initial="86vw", md="800px"),
             padding_x=rx.breakpoints(initial="5", md="4"),
             padding_top="10",
-            padding_bottom=rx.breakpoints(initial="160px", md="120px"),
+            padding_bottom=rx.breakpoints(initial="80px", md="56px"),
         )
     )
