@@ -1,59 +1,54 @@
-"""Species catalogue page — stub.
+"""Species catalogue: search + A-Z accordion + species cards.
 
-The search bar + A-Z index + species cards will live here once the bird
-data source is decided.
+Top-level page mounts the shared chrome and switches between four
+sub-views (alphabet / search results / no results / single species)
+based on State.catalogue_view.
 """
 
 import reflex as rx
 
+from ..components.catalogue_widgets import (
+    alphabet_accordion,
+    no_results_view,
+    search_bar,
+    search_results_list,
+    species_card_view,
+)
+from ..components.home_widgets import gradient_heading
 from ..components.layout import page_layout
-from ..styles import GLASS_BG, GLASS_BLUR, GLASS_BORDER
+from ..state import State
 
-
-def _coming_soon_card() -> rx.Component:
-    return rx.card(
-        rx.center(
-            rx.vstack(
-                rx.icon("search", size=40, color="#f0abfc"),
-                rx.heading(
-                    "Species Catalogue",
-                    size="8",
-                    color="white",
-                    weight="bold",
-                    text_align="center",
-                ),
-                rx.text(
-                    "Search and browse all 526 bird species the model can "
-                    "recognize. Coming soon.",
-                    size="3",
-                    color="rgba(255, 255, 255, 0.75)",
-                    text_align="center",
-                    max_width="520px",
-                    style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.6)"},
-                ),
-                align_items="center",
-                spacing="4",
-            ),
-            width="100%",
-            height="100%",
-        ),
-        width="100%",
-        max_width="640px",
-        min_height="320px",
-        padding="6",
-        style={
-            "background": GLASS_BG,
-            "border": GLASS_BORDER,
-            "backdrop_filter": GLASS_BLUR,
-            "box_shadow": "0 25px 60px -20px rgba(99, 102, 241, 0.5)",
-        },
-    )
+# Matrix-style parrot variant, as requested for the catalogue page.
+_MATRIX_PARROT = "https://cultofthepartyparrot.com/parrots/matrixparrot.gif"
 
 
 def catalogue() -> rx.Component:
     return page_layout(
         rx.vstack(
-            _coming_soon_card(),
+            gradient_heading(parrot_gif=_MATRIX_PARROT, subtitle=None),
+            # The species card view doesn't need the search bar — drilling
+            # into a species is a focused detail view.
+            rx.cond(
+                State.catalogue_is_species,
+                species_card_view(),
+                rx.vstack(
+                    search_bar(),
+                    rx.cond(
+                        State.catalogue_is_alphabet,
+                        alphabet_accordion(),
+                        rx.cond(
+                            State.catalogue_is_search_results,
+                            search_results_list(),
+                            # Fallback = "no_results" branch.
+                            no_results_view(),
+                        ),
+                    ),
+                    spacing="5",
+                    align_items="start",
+                    width="100%",
+                ),
+            ),
+            spacing="7",
             align_items="center",
             width="100%",
             max_width="780px",

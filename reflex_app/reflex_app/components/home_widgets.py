@@ -10,8 +10,20 @@ from ..state import State
 from ..styles import GRADIENT_TITLE
 
 
-def gradient_heading() -> rx.Component:
-    return rx.vstack(
+_DEFAULT_PARROT = "https://cultofthepartyparrot.com/parrots/hd/parrot.gif"
+_HOME_SUBTITLE = (
+    "Upload a bird photo, run inference, browse the top 5 predictions."
+)
+
+
+def gradient_heading(
+    parrot_gif: str = _DEFAULT_PARROT,
+    subtitle: str | None = _HOME_SUBTITLE,
+) -> rx.Component:
+    """The shared BirdML title block. The parrot gif (and optional subtitle
+    underneath) varies per page — home uses the classic party parrot, About
+    uses the science parrot, Catalogue uses the matrix parrot."""
+    children: list[rx.Component] = [
         # Inject the rainbow_shift keyframes once at render time. Reflex has
         # no first-class keyframe helper, so we drop raw <style> here.
         rx.html(
@@ -22,7 +34,7 @@ def gradient_heading() -> rx.Component:
         ),
         rx.hstack(
             rx.image(
-                src="https://cultofthepartyparrot.com/parrots/hd/parrot.gif",
+                src=parrot_gif,
                 height="72px",
                 width="72px",
                 style={"filter": "drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6))"},
@@ -46,17 +58,18 @@ def gradient_heading() -> rx.Component:
             spacing="4",
             justify="center",
         ),
-        rx.text(
-            "Upload a bird photo, run inference, browse the top 5 predictions.",
-            color="rgba(255, 255, 255, 0.85)",
-            size="3",
-            text_align="center",
-            style={"text-shadow": "0 1px 6px rgba(0, 0, 0, 0.6)"},
-        ),
-        align_items="center",
-        spacing="2",
-        width="100%",
-    )
+    ]
+    if subtitle:
+        children.append(
+            rx.text(
+                subtitle,
+                color="rgba(255, 255, 255, 0.85)",
+                size="3",
+                text_align="center",
+                style={"text-shadow": "0 1px 6px rgba(0, 0, 0, 0.6)"},
+            )
+        )
+    return rx.vstack(*children, align_items="center", spacing="2", width="100%")
 
 
 def image_preview() -> rx.Component:

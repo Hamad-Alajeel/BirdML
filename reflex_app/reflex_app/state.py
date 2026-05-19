@@ -4,6 +4,7 @@ Lives in its own module so every page and component can import the same
 State subclass without circular imports back through reflex_app.py.
 """
 
+import asyncio
 import base64
 import json
 import os
@@ -38,6 +39,20 @@ def _load_descriptions() -> dict[str, str]:
 
 _DESCRIPTIONS = _load_descriptions()
 
+# Sorted master list of every species the catalogue can show. Built from
+# the keys of _DESCRIPTIONS so the catalogue stays in sync with whatever
+# species_data files exist on disk.
+_ALL_SPECIES: list[str] = sorted(_DESCRIPTIONS.keys())
+
+# Bucket species by first letter for the A-Z accordion. Keys are uppercase
+# single characters; values are pre-sorted lists of species names.
+_SPECIES_BY_LETTER: dict[str, list[str]] = {}
+for _name in _ALL_SPECIES:
+    _first = _name[0].upper() if _name else "?"
+    _SPECIES_BY_LETTER.setdefault(_first, []).append(_name)
+
+_ALPHABET_LETTERS: list[str] = sorted(_SPECIES_BY_LETTER.keys())
+
 
 class State(rx.State):
     """Tracks app phase, the uploaded image, and carousel navigation."""
@@ -67,6 +82,59 @@ class State(rx.State):
     ]
 
     inference_error: str = ""
+
+    # ---------------- Catalogue page state ----------------
+    # Active sub-view of the catalogue page.
+    #   "alphabet"        — default A-Z accordion
+    #   "search_results"  — list of species matching the search query
+    #   "no_results"      — confused-bird animation when search has no hits
+    #   "species"         — single species card (drilled in from any list view)
+    catalogue_view: str = "alphabet"
+
+    # Tracks where the user came from when they drilled into a species card
+    # so the Back button returns them to the right list.
+    previous_catalogue_view: str = "alphabet"
+
+    search_query: str = ""
+    search_results: list[str] = []
+
+    # Which letter of the A-Z accordion is currently expanded ("" = none).
+    expanded_letter: str = ""
+
+    # Species name whose card is currently shown.
+    selected_species: str = ""
+
+    @rx.var
+    def alphabet_letters(self) -> list[str]:
+        return _ALPHABET_LETTERS
+
+    @rx.var
+    def expanded_letter_species(self) -> list[str]:
+        return _SPECIES_BY_LETTER.get(self.expanded_letter, [])
+
+    @rx.var
+    def catalogue_is_alphabet(self) -> bool:
+        return self.catalogue_view == "alphabet"
+
+    @rx.var
+    def catalogue_is_search_results(self) -> bool:
+        return self.catalogue_view == "search_results"
+
+    @rx.var
+    def catalogue_is_no_results(self) -> bool:
+        return self.catalogue_view == "no_results"
+
+    @rx.var
+    def catalogue_is_species(self) -> bool:
+        return self.catalogue_view == "species"
+
+    @rx.var
+    def selected_species_image(self) -> str:
+        return f"/species/{self.selected_species}.jpg"
+
+    @rx.var
+    def selected_species_description(self) -> str:
+        return _DESCRIPTIONS.get(self.selected_species, "")
 
     @rx.var
     def has_image(self) -> bool:
@@ -162,10 +230,17 @@ class State(rx.State):
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    f"{BIRD_API_URL}/predict",
-                    params={"k": 5},
-                    files={"file": (f"upload.{ext}", image_bytes, mime)},
+                # Run the API call and a minimum 3-second delay concurrently
+                # so the SVG animation always completes one full rainbow cycle
+                # (longest path = 3.5s color + 1.2s stagger) before the cards
+                # appear, even if inference is fast.
+                response, _ = await asyncio.gather(
+                    client.post(
+                        f"{BIRD_API_URL}/predict",
+                        params={"k": 5},
+                        files={"file": (f"upload.{ext}", image_bytes, mime)},
+                    ),
+                    asyncio.sleep(3.0),
                 )
                 response.raise_for_status()
                 predictions = response.json()["predictions"]
@@ -198,3 +273,50 @@ class State(rx.State):
         self.current_card = 0
         self.img_data_uri = ""
         self.inference_error = ""
+
+    # ---------------- Catalogue handlers ----------------
+    def submit_search(self, form_data: dict):
+        """Match whole, case-insensitive tokens between the user query and
+        every species name. A species is a hit if ANY word in its name equals
+        ANY word in the query. Results are de-duplicated and sorted."""
+        query = (form_data.get("query") or "").strip()
+        self.search_query = query
+        if not query:
+            self.catalogue_view = "alphabet"
+            self.search_results = []
+            return
+
+        user_tokens = {t.upper() for t in query.split() if t}
+        matches: set[str] = set()
+        for species in _ALL_SPECIES:
+            species_tokens = {t.upper() for t in species.split() if t}
+            if user_tokens & species_tokens:
+                matches.add(species)
+
+        self.search_results = sorted(matches)
+        self.catalogue_view = "search_results" if matches else "no_results"
+        self.expanded_letter = ""
+
+    def back_to_alphabet(self):
+        """Clear search state and return to the default A-Z accordion view."""
+        self.search_query = ""
+        self.search_results = []
+        self.expanded_letter = ""
+        self.catalogue_view = "alphabet"
+
+    def toggle_letter(self, letter: str):
+        """Open/close one letter of the A-Z accordion. Only one letter is
+        expanded at a time so the list stays compact."""
+        self.expanded_letter = "" if self.expanded_letter == letter else letter
+
+    def select_species(self, name: str):
+        """Drill into a single species card from whichever list view is
+        active. previous_catalogue_view remembers where to return to."""
+        self.previous_catalogue_view = self.catalogue_view
+        self.selected_species = name
+        self.catalogue_view = "species"
+
+    def back_from_species(self):
+        """Return to the list view the user drilled in from."""
+        self.catalogue_view = self.previous_catalogue_view
+        self.selected_species = ""

@@ -17,9 +17,17 @@ def page_layout(content: rx.Component) -> rx.Component:
         # glass cards stay legible regardless of which photo loads.
         rx.vstack(
             navbar(),
-            # flex=1 lets the content area expand to fill the rest of the
-            # viewport, preserving the home page's vertical centering.
-            rx.center(content, width="100%", flex="1"),
+            # Top-aligned content wrapper: every page anchors its heading at
+            # the same vertical position below the navbar regardless of how
+            # much content sits underneath. flex=1 still lets the wrapper
+            # expand so the dark gradient overlay fills the full viewport.
+            rx.flex(
+                content,
+                width="100%",
+                flex="1",
+                justify="center",
+                align="start",
+            ),
             spacing="0",
             min_height="100vh",
             width="100%",
