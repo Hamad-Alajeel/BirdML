@@ -229,7 +229,7 @@ def species_card_view() -> rx.Component:
     isn't a prediction — it's a static encyclopedia entry."""
     card = rx.box(
         rx.flex(
-            rx.box(
+            rx.flex(
                 rx.image(
                     src=State.selected_species_image,
                     width=rx.breakpoints(initial="140px", sm="180px", md="224px"),
@@ -239,15 +239,15 @@ def species_card_view() -> rx.Component:
                     border_radius="14px",
                     flex_shrink="0",
                 ),
+                # Use Radix flex props instead of inline CSS style for
+                # consistent centering across SSR/CSR.
+                direction="column",
+                align="center",
+                justify="center",
                 width=rx.breakpoints(initial="100%", md="260px"),
                 flex_shrink="0",
                 padding=rx.breakpoints(initial="14px 0 0 0", md="0"),
-                style={
-                    "align-self": "stretch",
-                    "display": "flex",
-                    "align-items": "center",
-                    "justify-content": "center",
-                },
+                align_self="stretch",
             ),
             rx.vstack(
                 rx.heading(

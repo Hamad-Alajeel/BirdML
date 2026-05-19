@@ -54,9 +54,13 @@ def gradient_heading(
                 weight="bold",
                 letter_spacing="-0.02em",
             ),
-            align_items="center",
+            align="center",
             spacing=rx.breakpoints(initial="3", md="4"),
             justify="center",
+            # Hstack has natural content width; margin auto centers it
+            # within the parent vstack (works regardless of parent's align
+            # prop or SSR/CSR hydration mismatch).
+            margin_x="auto",
         ),
     ]
     if subtitle:
@@ -67,9 +71,10 @@ def gradient_heading(
                 size="3",
                 text_align="center",
                 style={"text-shadow": "0 1px 6px rgba(0, 0, 0, 0.6)"},
+                margin_x="auto",
             )
         )
-    return rx.vstack(*children, align_items="center", spacing="2", width="100%")
+    return rx.vstack(*children, align="center", spacing="2", width="100%")
 
 
 def image_preview() -> rx.Component:
@@ -302,34 +307,40 @@ def nn_animation() -> rx.Component:
         + "</svg>"
     )
 
-    return rx.center(
-        rx.vstack(
-            rx.box(rx.html(svg), width="55vw", max_width="750px"),
-            rx.hstack(
-                rx.spinner(size="3"),
-                rx.text(
-                    "Running inference...",
-                    size="5",
-                    weight="bold",
-                    color="white",
-                    style={"text-shadow": "0 2px 8px rgba(0, 0, 0, 0.7)"},
-                ),
-                spacing="3",
-                align_items="center",
-            ),
-            rx.text(
-                "Forward pass through the network",
-                size="2",
-                color="rgba(255, 255, 255, 0.7)",
-                italic=True,
-                style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
-            ),
-            spacing="5",
-            align_items="center",
-            width="100%",
-            padding_y="6",
+    return rx.vstack(
+        rx.box(
+            rx.html(svg),
+            width="55vw",
+            max_width="750px",
+            margin_x="auto",
         ),
+        rx.hstack(
+            rx.spinner(size="3"),
+            rx.text(
+                "Running inference...",
+                size="5",
+                weight="bold",
+                color="white",
+                style={"text-shadow": "0 2px 8px rgba(0, 0, 0, 0.7)"},
+            ),
+            spacing="3",
+            align="center",
+            # hstack has natural content width — margin auto centers it
+            # within the parent vstack regardless of parent's align prop.
+            margin_x="auto",
+        ),
+        rx.text(
+            "Forward pass through the network",
+            size="2",
+            color="rgba(255, 255, 255, 0.7)",
+            italic=True,
+            style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
+            margin_x="auto",
+        ),
+        spacing="5",
+        align="center",
         width="100%",
+        padding_y="6",
     )
 
 
@@ -338,7 +349,7 @@ def carousel_card() -> rx.Component:
         rx.flex(
             # LEFT/TOP: bird photo. Side-by-side with text on desktop,
             # stacked above the text on mobile.
-            rx.box(
+            rx.flex(
                 rx.image(
                     src=State.current_card_image,
                     width=rx.breakpoints(initial="140px", sm="180px", md="224px"),
@@ -348,15 +359,16 @@ def carousel_card() -> rx.Component:
                     border_radius="14px",
                     flex_shrink="0",
                 ),
+                # rx.flex with direction=column + align=center + justify=center
+                # gives us both vertical and horizontal centering via Radix
+                # props (reliable across SSR/CSR) instead of a CSS style dict.
+                direction="column",
+                align="center",
+                justify="center",
                 width=rx.breakpoints(initial="100%", md="260px"),
                 flex_shrink="0",
                 padding=rx.breakpoints(initial="14px 0 0 0", md="0"),
-                style={
-                    "align-self": "stretch",
-                    "display": "flex",
-                    "align-items": "center",
-                    "justify-content": "center",
-                },
+                align_self="stretch",
             ),
             # RIGHT/BOTTOM: prediction details
             rx.vstack(
@@ -466,7 +478,7 @@ def carousel_card() -> rx.Component:
             spacing=rx.breakpoints(initial="3", md="5"),
             justify="center",
             width="100%",
-        ),  # already uses Radix `align` prop, good
+        ),
         rx.hstack(
             rx.foreach(
                 [0, 1, 2, 3, 4],
@@ -484,12 +496,15 @@ def carousel_card() -> rx.Component:
             ),
             spacing="2",
             justify="center",
+            # hstack has natural content width — margin auto centers it
+            margin_x="auto",
         ),
         rx.text(
             State.position_label,
             size="2",
             color="rgba(255, 255, 255, 0.7)",
             style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
+            margin_x="auto",
         ),
         rx.button(
             rx.hstack(
@@ -502,10 +517,11 @@ def carousel_card() -> rx.Component:
             size="3",
             color_scheme="gray",
             margin_top="4",
+            margin_x="auto",
             style={"cursor": "pointer", "color": "white"},
         ),
         spacing="5",
-        align_items="center",
+        align="center",
         width="100%",
     )
 

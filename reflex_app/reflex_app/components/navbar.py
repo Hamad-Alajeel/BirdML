@@ -87,10 +87,11 @@ def _icon_link(icon_component: rx.Component, href: str, label: str) -> rx.Compon
 
 
 def navbar() -> rx.Component:
-    return rx.center(
-        # Pill styling on rx.box so border-radius doesn't clip link text.
-        # rx.hstack applies overflow:hidden when border-radius is set on it
-        # directly, which cuts off the words at the curved ends.
+    # Drop rx.center wrapper (same SSR/CSR hydration issue as the home
+    # widgets). Use rx.box with width=100% as outer "row," and the pill
+    # itself uses width="fit-content" + margin_x="auto" so it's a block
+    # element that centers via the classic margin-auto trick.
+    return rx.box(
         rx.box(
             rx.hstack(
                 _nav_link("Home", "/"),
@@ -100,7 +101,7 @@ def navbar() -> rx.Component:
                 _icon_link(_github_icon(), "https://github.com/Hamad-Alajeel", "GitHub"),
                 _icon_link(_linkedin_icon(), "https://www.linkedin.com/in/hamad-alajeel-a6bb41210/", "LinkedIn"),
                 spacing=rx.breakpoints(initial="1", sm="2", md="3"),
-                align_items="center",
+                align="center",
                 padding_x=rx.breakpoints(initial="3", sm="4", md="6"),
                 padding_y=rx.breakpoints(initial="2", md="3"),
             ),
@@ -108,16 +109,14 @@ def navbar() -> rx.Component:
             border=GLASS_BORDER,
             border_radius="9999px",
             box_shadow="0 14px 30px -12px rgba(99, 102, 241, 0.45)",
+            # fit-content so the pill takes its natural content width;
+            # margin-auto then centers it horizontally inside the outer
+            # full-width row.
+            width="fit-content",
+            margin_x="auto",
             style={"backdrop-filter": GLASS_BLUR},
         ),
         width="100%",
-        # Match the page content max_width and explicitly center via auto
-        # margins so we don't rely on the parent flex's align prop. Using
-        # `%` instead of `vw` because vw can include reserved scrollbar
-        # space in some mobile browsers (notably Instagram's webview),
-        # which causes vw-centered content to appear off-center.
-        max_width=rx.breakpoints(initial="86%", md="100%"),
-        margin_x="auto",
         padding_top="5",
         padding_bottom="2",
         padding_x=rx.breakpoints(initial="4", md="2"),
