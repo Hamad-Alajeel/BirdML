@@ -35,13 +35,13 @@ def gradient_heading(
         rx.hstack(
             rx.image(
                 src=parrot_gif,
-                height="72px",
-                width="72px",
+                height=["48px", "56px", "72px"],
+                width=["48px", "56px", "72px"],
                 style={"filter": "drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6))"},
             ),
             rx.heading(
                 "BirdML",
-                size="9",
+                size=["7", "8", "9"],
                 style={
                     "background-image": GRADIENT_TITLE,
                     "background-size": "200% 100%",
@@ -55,7 +55,7 @@ def gradient_heading(
                 letter_spacing="-0.02em",
             ),
             align_items="center",
-            spacing="4",
+            spacing=["3", "3", "4"],
             justify="center",
         ),
     ]
