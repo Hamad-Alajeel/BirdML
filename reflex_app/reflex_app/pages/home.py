@@ -30,13 +30,6 @@ def home() -> rx.Component:
                     carousel_card(),
                 ),
             ),
-            rx.text(
-                "Demo UI — predictions are placeholder data.",
-                size="1",
-                color="rgba(255, 255, 255, 0.55)",
-                text_align="center",
-                style={"text-shadow": "0 1px 4px rgba(0, 0, 0, 0.7)"},
-            ),
             spacing="7",
             align_items="center",
             width="100%",
