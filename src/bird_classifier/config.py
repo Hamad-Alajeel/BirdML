@@ -25,7 +25,7 @@ MLRUNS_DIR    = PROJECT_ROOT / "mlruns"
 
 # ─── Dataset constants ────────────────────────────────────────────────────────
 
-NUM_CLASSES   = 526   # discovered: 525 advertised + 1 extra in val/test
+NUM_CLASSES   = 526   # 525 unique species; labels 380 and 381 map to the same species (duplicate)
 IMAGE_SIZE    = 224
 RESIZE_BEFORE_CROP = 256
 

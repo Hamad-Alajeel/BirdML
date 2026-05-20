@@ -151,7 +151,7 @@ Bird ML/
 
 ## Dataset and Model
 
-**Dataset.** [`yashikota/birds-525-species-image-classification`](https://huggingface.co/datasets/yashikota/birds-525-species-image-classification) — ~90k images, 526 unique classes (525 advertised + one extra discovered in val/test), pre-split into train/val/test, all 224×224 RGB. Stored as parquet at `s3://bird-ml-halajeel/data/raw/birds-525/`.
+**Dataset.** [`yashikota/birds-525-species-image-classification`](https://huggingface.co/datasets/yashikota/birds-525-species-image-classification) — ~90k images of 525 unique bird species, pre-split into train/val/test, all 224×224 RGB. The model has a 526-class output head because the dataset assigns two distinct label IDs (380 and 381) to the same species — see [Known Limitations](#known-limitations). Stored as parquet at `s3://bird-ml-halajeel/data/raw/birds-525/`.
 
 **Model.** EfficientNet-B3 (ImageNet pretrained) with a fresh 526-class linear head. Fine-tuned in two stages:
 
