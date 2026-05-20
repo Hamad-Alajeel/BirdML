@@ -269,10 +269,22 @@ Prerequisites: Python 3.11+, [`uv`](https://docs.astral.sh/uv/), Docker, AWS CLI
 ```bash
 git clone <your-fork-url>
 cd "Bird ML"
-uv sync --extra torch --extra dev
+uv sync --extra torch --extra dev --extra test
 ```
 
 `pyproject.toml` declares a custom PyTorch CUDA 12.8 index ([pyproject.toml:34-41](pyproject.toml#L34-L41)). On CPU-only machines, replace the index URL with `https://download.pytorch.org/whl/cpu`.
+
+### Running the tests
+
+The unit suite is fast (~15s) and has no AWS dependencies. Integration tests are opt-in.
+
+```bash
+uv run pytest                  # unit tests only
+uv run pytest -m integration   # integration tests (requires AWS credentials)
+uv run pytest --cov=bird_classifier --cov-report=term-missing
+```
+
+47 unit tests cover the critical seams: label mapping (the source of the container/notebook accuracy drift), image transforms, model checkpoint round-trips, the `top_k_accuracy` engine, the `predict()` output contract, and the FastAPI endpoints. The integration test verifies that `class_names.json` in S3 still aligns with the current dataset's label mapping — a direct regression test for the bug that motivated the suite.
 
 To work in notebooks under [notebooks/](notebooks/):
 
@@ -430,9 +442,9 @@ Example response:
 ```json
 {
   "predictions": [
-    {"species": "AMERICAN GOLDFINCH", "score": 0.94},
-    {"species": "EVENING GROSBEAK",   "score": 0.03},
-    {"species": "YELLOW WARBLER",     "score": 0.01}
+    {"label": 12, "score": 0.94, "name": "AMERICAN GOLDFINCH"},
+    {"label": 191, "score": 0.03, "name": "EVENING GROSBEAK"},
+    {"label": 519, "score": 0.01, "name": "YELLOW WARBLER"}
   ]
 }
 ```
@@ -542,11 +554,10 @@ This keeps tracking infrastructure-free while still preserving full experiment h
 
 ## Known Limitations
 
-- **No automated test suite.** The `tests/` directory is a placeholder.
 - **No Infrastructure-as-Code.** AWS resources (S3 bucket, IAM role, ECR repos, ECS cluster/services, ALB, Route 53 record) are provisioned manually. A Terraform module is a natural next step.
 - **Hardcoded AWS values.** `AWS_ACCOUNT_ID`, `S3_BUCKET`, and the IAM role suffix must be edited in [config.py](src/bird_classifier/config.py) and [pipeline.py](infrastructure/sagemaker/pipeline.py) before a fork can run.
 - **Approval → deployment is not automated.** Approving a model in SageMaker Studio currently does not trigger [deployment.yml](.github/workflows/deployment.yml). The intended flow uses EventBridge → GitHub repository-dispatch; until then, deployment is a manual workflow dispatch.
-- **`NUM_CLASSES = 526`, not 525.** The published dataset advertises 525 species but the val/test splits contain one additional class. This was discovered during ingestion; rather than silently dropping the extra class, the model has a 526-way head.
+- **`NUM_CLASSES = 526`, not 525.** The published dataset advertises 525 species but includes a duplicate class in the set with class labels 380 and 381, so the model's output dimension is 526
 
 ---
 

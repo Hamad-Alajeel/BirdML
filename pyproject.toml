@@ -26,6 +26,12 @@ dev = [
     "pandas>=2.3.3",
     "sagemaker>=2.236,<3",
 ]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "moto[s3]>=5.0.0",
+    "fastapi>=0.115.0",
+]
 torch = [
     "torch>=2.11.0",
     "torchvision>=0.26.0",
@@ -39,3 +45,11 @@ torchvision = { index = "pytorch-cu128" }
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
 explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: tests that hit real AWS / external services; opt-in via -m integration",
+]
