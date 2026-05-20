@@ -55,7 +55,7 @@ _ALPHABET_LETTERS: list[str] = sorted(_SPECIES_BY_LETTER.keys())
 
 # If the model's best guess is still below this, show the low-confidence
 # warning before the predictions instead of jumping straight to results.
-LOW_CONFIDENCE_THRESHOLD = 0.70
+LOW_CONFIDENCE_THRESHOLD = 0.50
 
 
 class State(rx.State):
