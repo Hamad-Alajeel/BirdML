@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Test cache
+.pytest_cache/
+
 # Dataset (only the root-level data folder, not src/bird_classifier/data/)
 /data/
 
@@ -17,9 +20,12 @@ secrets/
 
 # claude
 CLAUDE.md
+.claude/
 
-# word dock
-bird-ml-about.docx
+# word docs and temp files
+*.docx
+*.tmp
+~$*
 
 # Legacy Streamlit frontend — superseded by reflex_app/; kept locally for reference
 /frontend/
