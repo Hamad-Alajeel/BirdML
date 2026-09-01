@@ -1,0 +1,5 @@
+# Treat Jupyter notebooks as documentation, not code
+*.ipynb linguist-documentation
+
+# Optional: improve diffs for notebooks
+*.ipynb diff=jupyter+json
